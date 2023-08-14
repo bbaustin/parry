@@ -1,7 +1,14 @@
 body {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  background: blanchedalmond;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
 }
 
 #arena {
@@ -17,4 +24,8 @@ body {
   position: absolute;
   transition: transform 0.1s ease;
   transform-origin: bottom center;
+}
+
+.sword.enemy {
+  background: orange;
 }

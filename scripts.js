@@ -8,6 +8,7 @@ const arena = document.getElementById('arena');
 //////////////////
 const sword = document.getElementsByClassName('sword')[0];
 
+// Move sword
 document.addEventListener('mousemove', (event) => {
   // Update the follower's position to match the mouse cursor
   const mouseX = event.clientX;
@@ -21,23 +22,20 @@ document.addEventListener('mousemove', (event) => {
   sword.style.top = mouseY + yOffset + 'px';
 });
 
-/////////////////
-// Enemy Sword //
-////////////////
+// Rotation angle of sword
+let rotationAngle = 0;
 
-///////////////
-// Game Loop //
-///////////////
-var keyState = {
+// State to change angle of sword in game loop
+let keyState = {
   q: false,
   e: false,
 };
+
+// Change state when changing sword angle
 document.addEventListener('keydown', (event) => {
   if (event.key === 'q') {
     keyState.q = true;
-  }
-  // Increase angle to rotate right
-  else if (event.key === 'e') {
+  } else if (event.key === 'e') {
     keyState.e = true;
   }
 });
@@ -48,9 +46,9 @@ document.addEventListener('keyup', (event) => {
     keyState.e = false;
   }
 });
-let rotationAngle = 0;
-function gameLoop() {
-  console.log(rotationAngle);
+
+// Rotate sword if state is true/active
+function checkRotate() {
   if (keyState.q && rotationAngle >= -80) {
     // Decrease angle to rotate left
     rotationAngle -= 10;
@@ -62,7 +60,62 @@ function gameLoop() {
     rotationAngle += 10;
     sword.style.transform = `rotate(${rotationAngle}deg)`;
   }
+}
+
+/////////////////
+// Enemy Sword //
+////////////////
+function createEnemySword() {
+  const enemySword = document.createElement('div');
+  const enemySwordRotation = `rotate(${getRandomInt(-90, 90)}deg)`;
+  enemySword.classList.add('sword', 'enemy');
+  enemySword.style.transform = enemySwordRotation;
+  arena.appendChild(enemySword);
+}
+createEnemySword();
+const enemySword = document.getElementsByClassName('enemy')[0];
+
+///////////////////
+// Intersection //
+//////////////////
+
+const checkIfIntersecting = (sword, enemySword) => {
+  const swordBox = sword.getBoundingClientRect();
+  const enemySwordBox = enemySword.getBoundingClientRect();
+
+  return (
+    swordBox.left < enemySwordBox.right &&
+    swordBox.right > enemySwordBox.left &&
+    swordBox.top < enemySwordBox.bottom &&
+    swordBox.bottom > enemySwordBox.top
+  );
+};
+
+// if (isIntersecting()) {
+//   document.getElementById('intersect').textContent = 'hey yeh';
+// }
+
+///////////////
+// Game Loop //
+///////////////
+
+function gameLoop() {
+  checkRotate();
+  const isIntersecting = checkIfIntersecting(sword, enemySword);
+  if (isIntersecting) {
+    console.log('ok');
+    sword.style.background = 'pink';
+  } else {
+    sword.style.background = 'blue';
+  }
   setTimeout(gameLoop, 10);
 }
 
 gameLoop();
+
+///////////
+// Utils //
+///////////
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
