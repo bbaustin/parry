@@ -17,7 +17,11 @@ h1 {
   border: 1px solid saddlebrown;
 }
 
-.sword {
+#canvas {
+  border: 1px solid saddlebrown;
+}
+
+/* .sword {
   height: 100px;
   width: 5px;
   background: blue;
@@ -28,4 +32,4 @@ h1 {
 
 .sword.enemy {
   background: orange;
-}
+} */
