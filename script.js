@@ -26,7 +26,7 @@ function drawPlayerSword() {
   context.beginPath();
   context.fillRect(
     mouseX - playerSwordWidth / 2,
-    mouseY - playerSwordHeight * 0.9,
+    mouseY - playerSwordHeight,
     playerSwordWidth,
     playerSwordHeight
   );
