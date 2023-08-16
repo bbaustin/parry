@@ -1,6 +1,6 @@
-////////////
-// Canvas //
-////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              Canvas                                              //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 const canvas = document.getElementById('canvas');
 const context = canvas.getContext('2d');
 let canvasPosition = getPositionRelativeToCanvas(canvas);
@@ -10,9 +10,9 @@ let playerSwordWidth = 10;
 let playerSwordHeight = 100;
 let playerSwordRotationAngle = 0;
 
-//////////////////
-// Player Sword //
-//////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Player Sword                                           //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let keyStateForPlayerSwordRotation = {
   q: false,
@@ -68,14 +68,17 @@ document.addEventListener('keyup', (event) => {
  * Pretty weird... See here for more details: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate
  */
 function checkPlayerSwordRotate() {
-  const angleInDegrees = 10;
+  // Why 9? The sword can rotate between -90 and 90 degrees.
+  // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
+  // This also explains the 81 below (90 - 9 = 81).
+  const angleInDegrees = 9;
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (keyStateForPlayerSwordRotation.q && playerSwordRotationAngle >= -80) {
+  if (keyStateForPlayerSwordRotation.q && playerSwordRotationAngle >= -81) {
     playerSwordRotationAngle -= angleInDegrees;
   }
 
-  if (keyStateForPlayerSwordRotation.e && playerSwordRotationAngle <= 80) {
+  if (keyStateForPlayerSwordRotation.e && playerSwordRotationAngle <= 81) {
     playerSwordRotationAngle += angleInDegrees;
   }
 
@@ -96,9 +99,13 @@ function checkPlayerSwordRotate() {
   context.restore();
 }
 
-///////////
-// Utils //
-///////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Enemy Sword                                            //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              Utils                                               //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * Retrieves the position of an element relative to the canvas.
  * For more information, see here and search for "getPosition": https://www.kirupa.com/canvas/follow_mouse_cursor.htm
