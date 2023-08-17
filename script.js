@@ -8,6 +8,8 @@ let mouseX = 0;
 let mouseY = 0;
 let playerSwordWidth = 10;
 let playerSwordHeight = 100;
+const enemySwordWidth = 10;
+const enemySwordHeight = 100;
 let playerSwordRotationAngle = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,14 +26,14 @@ let keyStateForPlayerSwordRotation = {
  */
 function drawPlayerSword() {
   context.beginPath();
+  context.fillStyle = '#6A6AFF';
   context.fillRect(
     mouseX - playerSwordWidth / 2,
     mouseY - playerSwordHeight,
     playerSwordWidth,
     playerSwordHeight
   );
-  context.fillStyle = '#6A6AFF';
-  context.fill();
+  // context.fill();
 }
 
 /**
@@ -72,7 +74,7 @@ function checkPlayerSwordRotate() {
   // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
   // This also explains the 81 below (90 - 9 = 81).
   const angleInDegrees = 9;
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  // context.clearRect(0, 0, canvas.width, canvas.height);
 
   if (keyStateForPlayerSwordRotation.q && playerSwordRotationAngle >= -81) {
     playerSwordRotationAngle -= angleInDegrees;
@@ -83,7 +85,7 @@ function checkPlayerSwordRotate() {
   }
 
   // Clear the canvas
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  // context.clearRect(0, 0, canvas.width, canvas.height);
 
   // Save the context state before transformations
   context.save();
@@ -102,6 +104,25 @@ function checkPlayerSwordRotate() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+//TODO: Get random location
+// Have sword show up
+// Color it
+// Add it in the game loop
+// Let the color change
+// Etc.
+// See how miserable it is to have all these functions running in the game loop
+const enemySwordLocation = getRandomLocation();
+function drawEnemySword() {
+  context.beginPath();
+  context.fillStyle = '#FF6A6A';
+  context.fillRect(
+    enemySwordLocation.x,
+    enemySwordLocation.y,
+    enemySwordWidth + 10,
+    enemySwordHeight
+  );
+  // context.fill();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Utils                                               //
@@ -139,9 +160,16 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getRandomLocation() {
+  const randomX = Math.random() * canvas.width;
+  const randomY = Math.random() * canvas.height;
+  return { x: randomX, y: randomY };
+}
+
 function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
-  drawPlayerSword();
+  drawEnemySword();
+  // drawPlayerSword();
   checkPlayerSwordRotate();
   requestAnimationFrame(gameLoop);
 }
