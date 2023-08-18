@@ -9,17 +9,18 @@ let mouseY = 0;
 const enemySwordWidth = 10;
 const enemySwordHeight = 100;
 const blu = '#6a6aff';
-const gre = '#bad500';
+const grn = '#bad500';
 const red = '#ff6a6a';
+const gry = '#6a6a6a';
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                           Player Sword                                           //
+//                                               Sword                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PlayerSword {
+class Sword {
   constructor({
-    position = { x: 300, y: 300 },
-    color = blu,
+    position = { x: 0, y: 0 },
+    color = gry,
     width = 10,
     height = 100,
     rotationAngle = 0,
@@ -31,21 +32,29 @@ class PlayerSword {
     this.rotationAngle = rotationAngle;
   }
 
-  draw() {
+  draw(swordPosX, swordPosY) {
     context.beginPath();
     context.fillStyle = this.color;
     context.fillRect(
-      mouseX - this.width / 2,
-      mouseY - this.height,
+      swordPosX - this.width / 2,
+      swordPosY - this.height,
       this.width,
       this.height
     );
     // context.fill();
   }
+}
 
-  setMousePosition(e) {
-    mouseX = e.clientX - canvasPosition.x;
-    mouseY = e.clientY - canvasPosition.y;
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Player Sword                                           //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class PlayerSword extends Sword {
+  constructor() {
+    super({
+      position: { x: mouseX, y: mouseY },
+      color: blu,
+    });
   }
 
   checkSwordRotation() {
@@ -74,7 +83,7 @@ class PlayerSword {
     context.rotate((this.rotationAngle * Math.PI) / 180);
     context.translate(-mouseX, -mouseY);
 
-    this.draw();
+    this.draw(mouseX, mouseY);
 
     // Restore the original context state
     context.restore();
@@ -121,18 +130,19 @@ document.addEventListener('keyup', (event) => {
 // Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
 // + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
 
+// NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
-function drawEnemySword() {
-  context.beginPath();
-  context.fillStyle = '#FF6A6A';
-  context.fillRect(
-    enemySwordLocation.x,
-    enemySwordLocation.y,
-    enemySwordWidth + 10,
-    enemySwordHeight
-  );
-  // context.fill();
+class EnemySword extends Sword {
+  constructor() {
+    super({
+      position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
+      color: red,
+      rotationAngle: getRandomInt(0, 360), // TODO: this doesn't work right now, probably because I don't have a "check enemySwordRotation function"
+    });
+  }
 }
+const es = new EnemySword();
+console.log(es);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                        Collision Detection                                       //
@@ -196,7 +206,7 @@ function getRandomLocation() {
 
 function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
-  drawEnemySword();
+  es.draw(es.position.x, es.position.y);
   // drawPlayerSword();
   ps.checkSwordRotation();
   collisionDetection();
