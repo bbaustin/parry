@@ -1,50 +1,94 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              Canvas                                              //
+//                                      Canvas and Global Stuff                                     //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const canvas = document.getElementById('canvas');
 const context = canvas.getContext('2d');
 let canvasPosition = getPositionRelativeToCanvas(canvas);
 let mouseX = 0;
 let mouseY = 0;
-let playerSwordWidth = 10;
-let playerSwordHeight = 100;
 const enemySwordWidth = 10;
 const enemySwordHeight = 100;
-let playerSwordRotationAngle = 0;
+const blu = '#6a6aff';
+const gre = '#bad500';
+const red = '#ff6a6a';
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Player Sword                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class PlayerSword {
+  constructor({
+    position = { x: 300, y: 300 },
+    color = blu,
+    width = 10,
+    height = 100,
+    rotationAngle = 0,
+  }) {
+    this.position = position;
+    this.color = color;
+    this.width = width;
+    this.height = height;
+    this.rotationAngle = rotationAngle;
+  }
+
+  draw() {
+    context.beginPath();
+    context.fillStyle = this.color;
+    context.fillRect(
+      mouseX - this.width / 2,
+      mouseY - this.height,
+      this.width,
+      this.height
+    );
+    // context.fill();
+  }
+
+  setMousePosition(e) {
+    mouseX = e.clientX - canvasPosition.x;
+    mouseY = e.clientY - canvasPosition.y;
+  }
+
+  checkSwordRotation() {
+    // Why 9? The sword can rotate between -90 and 90 degrees.
+    // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
+    // This also explains the 81 below (90 - 9 = 81).
+    const angleInDegrees = 9;
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (keyStateForPlayerSwordRotation.q && this.rotationAngle >= -81) {
+      this.rotationAngle -= angleInDegrees;
+    }
+
+    if (keyStateForPlayerSwordRotation.e && this.rotationAngle <= 81) {
+      this.rotationAngle += angleInDegrees;
+    }
+
+    // Clear the canvas
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Save the context state before transformations
+    context.save();
+
+    // Apply rotation at the calculated center point
+    context.translate(mouseX, mouseY);
+    context.rotate((this.rotationAngle * Math.PI) / 180);
+    context.translate(-mouseX, -mouseY);
+
+    this.draw();
+
+    // Restore the original context state
+    context.restore();
+  }
+}
+const ps = new PlayerSword({});
+
+/**
+ * Used by event listeners directly below. Maybe should be in PlayerSword class, but I think I want it outside? Idk
+ */
 let keyStateForPlayerSwordRotation = {
   q: false,
   e: false,
 };
-
-/**
- * Draw Player (blue) sword on canvas. To be run in Game Loop.
- */
-function drawPlayerSword() {
-  context.beginPath();
-  context.fillStyle = '#6A6AFF';
-  context.fillRect(
-    mouseX - playerSwordWidth / 2,
-    mouseY - playerSwordHeight,
-    playerSwordWidth,
-    playerSwordHeight
-  );
-  // context.fill();
-}
-
-/**
- * Move sword with mouse, taking into account position of canvas in window (canvasPosition)
- */
-
-function setMousePositionForPlayerSword(e) {
-  mouseX = e.clientX - canvasPosition.x;
-  mouseY = e.clientY - canvasPosition.y;
-}
-canvas.addEventListener('mousemove', setMousePositionForPlayerSword);
 
 /**
  * Update keyState for changing PlayerSword angle.
@@ -64,53 +108,19 @@ document.addEventListener('keyup', (event) => {
   }
 });
 
-/**
- * Based on keyState, actually do the rotation.
- * Need to translate the sword first, or else it automatically rotates anchored from the top-left of the canvas (0,0)
- * Pretty weird... See here for more details: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate
- */
-function checkPlayerSwordRotate() {
-  // Why 9? The sword can rotate between -90 and 90 degrees.
-  // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
-  // This also explains the 81 below (90 - 9 = 81).
-  const angleInDegrees = 9;
-  // context.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (keyStateForPlayerSwordRotation.q && playerSwordRotationAngle >= -81) {
-    playerSwordRotationAngle -= angleInDegrees;
-  }
-
-  if (keyStateForPlayerSwordRotation.e && playerSwordRotationAngle <= 81) {
-    playerSwordRotationAngle += angleInDegrees;
-  }
-
-  // Clear the canvas
-  // context.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Save the context state before transformations
-  context.save();
-
-  // Apply rotation at the calculated center point
-  context.translate(mouseX, mouseY);
-  context.rotate((playerSwordRotationAngle * Math.PI) / 180);
-  context.translate(-mouseX, -mouseY);
-
-  drawPlayerSword();
-
-  // Restore the original context state
-  context.restore();
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //TODO: Get random location
-// Have sword show up
-// Color it
-// Add it in the game loop
+// DONE: Have sword show up
+// DONE: Color it
+// DONE: Add it in the game loop
 // Let the color change
-// Etc.
-// See how miserable it is to have all these functions running in the game loop
+// Intersection
+// Timing
+// Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
+// + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
+
 const enemySwordLocation = getRandomLocation();
 function drawEnemySword() {
   context.beginPath();
@@ -123,6 +133,15 @@ function drawEnemySword() {
   );
   // context.fill();
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                        Collision Detection                                       //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function collisionDetection(playerSword, enemySword) {}
+collisionDetection();
+
+function handleCollision(result) {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Utils                                               //
@@ -150,6 +169,15 @@ function getPositionRelativeToCanvas(element) {
 }
 
 /**
+ * Move sword with mouse, taking into account position of canvas in window (canvasPosition)
+ */
+function setMousePositionForPlayerSword(e) {
+  mouseX = e.clientX - canvasPosition.x;
+  mouseY = e.clientY - canvasPosition.y;
+}
+canvas.addEventListener('mousemove', setMousePositionForPlayerSword);
+
+/**
  * Generates a random integer within the specified range.
  *
  * @param {number} min - The minimum value of the range (inclusive).
@@ -170,7 +198,8 @@ function gameLoop() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   drawEnemySword();
   // drawPlayerSword();
-  checkPlayerSwordRotate();
+  ps.checkSwordRotation();
+  collisionDetection();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
