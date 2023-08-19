@@ -24,12 +24,19 @@ class Sword {
     width = 10,
     height = 100,
     rotationAngle = 0,
+    boundary = {
+      top: position.y - height,
+      bottom: position.y,
+      left: position.x - width / 2,
+      right: position.x + width / 2,
+    },
   }) {
     this.position = position;
     this.color = color;
     this.width = width;
     this.height = height;
     this.rotationAngle = rotationAngle;
+    this.boundary = boundary;
   }
 
   draw(swordPosX, swordPosY) {
@@ -44,6 +51,11 @@ class Sword {
     // context.fill();
   }
 }
+//
+// const playerTop = this.position.y - this.height;
+// const playerBottom = this.position.y;
+// const playerLeft = this.position.x - this.width / 2;
+// const playerRight = this.position.x + this.width / 2;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Player Sword                                           //
@@ -55,6 +67,16 @@ class PlayerSword extends Sword {
       position: { x: mouseX, y: mouseY },
       color: blu,
     });
+  }
+
+  updateBoundary() {
+    // TODO: This is not taking into account angle.. do you need to do some mathy shit? --> See chat :D
+    this.boundary = {
+      top: mouseY - this.height,
+      bottom: mouseY,
+      left: mouseX - this.width / 2,
+      right: mouseX + this.width / 2,
+    };
   }
 
   checkSwordRotation() {
@@ -82,11 +104,34 @@ class PlayerSword extends Sword {
     context.translate(mouseX, mouseY);
     context.rotate((this.rotationAngle * Math.PI) / 180);
     context.translate(-mouseX, -mouseY);
+    this.updateBoundary();
 
     this.draw(mouseX, mouseY);
-
     // Restore the original context state
     context.restore();
+  }
+
+  collisionDetection(enemy) {
+    const { top, bottom, left, right } = this.boundary;
+    const {
+      top: enemyTop,
+      bottom: enemyBottom,
+      left: enemyLeft,
+      right: enemyRight,
+    } = enemy.boundary;
+    if (
+      bottom > enemyTop &&
+      top < enemyBottom &&
+      right > enemyLeft &&
+      left < enemyRight
+    ) {
+      // Collision detected
+      console.log('Collision detected!');
+      this.color = grn;
+      // Implement collision response here
+    } else {
+      this.color = blu;
+    }
   }
 }
 const ps = new PlayerSword({});
@@ -142,16 +187,15 @@ class EnemySword extends Sword {
   }
 }
 const es = new EnemySword();
-console.log(es);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                        Collision Detection                                       //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function collisionDetection(playerSword, enemySword) {}
-collisionDetection();
-
-function handleCollision(result) {}
+// function collisionDetection(playerSword, enemySword) {}
+// collisionDetection();
+//
+// function handleCollision(result) {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Utils                                               //
@@ -209,7 +253,8 @@ function gameLoop() {
   es.draw(es.position.x, es.position.y);
   // drawPlayerSword();
   ps.checkSwordRotation();
-  collisionDetection();
+  ps.updateBoundary();
+  ps.collisionDetection(es);
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
