@@ -30,19 +30,12 @@ class Sword {
     width = 10,
     height = 100,
     rotationAngle = 0,
-    boundary = {
-      top: position.y - height,
-      bottom: position.y,
-      left: position.x - width / 2,
-      right: position.x + width / 2,
-    },
   }) {
     this.position = position;
     this.color = color;
     this.width = width;
     this.height = height;
     this.rotationAngle = rotationAngle;
-    this.boundary = boundary;
   }
 
   draw(swordPosX, swordPosY) {
@@ -54,7 +47,6 @@ class Sword {
       this.width,
       this.height
     );
-    // context.fill();
   }
 }
 
@@ -124,12 +116,7 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//TODO: Get random location
-// DONE: Have sword show up
-// DONE: Color it
-// DONE: Add it in the game loop
 // Let the color change
-// Intersection
 // Timing
 // Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
 // + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
@@ -150,6 +137,7 @@ const es = new EnemySword();
 //                                        Collision Detection                                       //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // NOTE: Major credit to Qixotl LFC: https://www.youtube.com/watch?v=MvlhMEE9zuc
+// Also Pikuma: https://www.youtube.com/watch?v=-EsWKT7Doww&t=1686s
 function rotatedCoordinatesHelper(
   centerX,
   centerY,
@@ -167,7 +155,6 @@ function rotatedCoordinatesHelper(
   let rotatedX = centerX + distance * Math.cos(originalAngle + rotatedAngle);
   let rotatedY = centerY + distance * Math.sin(originalAngle + rotatedAngle);
 
-  console.log(rotatedX, rotatedY);
   return {
     x: rotatedX,
     y: rotatedY,
@@ -221,7 +208,7 @@ function getRotatedCoordinates(sword) {
   };
 }
 
-//Functional objects for the Separate Axis Theorum
+//Functional objects for the Separate Axis Theorem
 //Single vertex
 function xy(x, y) {
   this.x = x;
@@ -260,8 +247,7 @@ function isColliding(polygonA, polygonB) {
     amax = null;
     bmin = null;
     bmax = null;
-    /*Work out all of the dot products for all of the vertices in PolygonA against the perpendicular vector
-         that is currently being looped through*/
+    // Work out all of the dot products for all of the vertices in PolygonA against the perpendicular vector that is currently being looped through
     for (var j = 0; j < polygonA.vertex.length; j++) {
       dot =
         polygonA.vertex[j].x * perpendicularStack[i].x +
@@ -274,8 +260,7 @@ function isColliding(polygonA, polygonB) {
         amin = dot;
       }
     }
-    /*Work out all of the dot products for all of the vertices in PolygonB against the perpendicular vector
-         that is currently being looped through*/
+    // Work out all of the dot products for all of the vertices in PolygonB against the perpendicular vector that is currently being looped through
     for (var j = 0; j < polygonB.vertex.length; j++) {
       dot =
         polygonB.vertex[j].x * perpendicularStack[i].x +
@@ -292,13 +277,12 @@ function isColliding(polygonA, polygonB) {
     if ((amin < bmax && amin > bmin) || (bmin < amax && bmin > amin)) {
       continue;
     }
-    //Otherwise, we know that there is no collision for definite.
+    //Otherwise, we know that there is no collision
     else {
       return false;
     }
   }
-  /*If we have gotten this far. Where we have looped through all of the perpendicular edges and not a single one of there projections had
-    a gap in them. Then we know that the 2 polygons are colliding for definite then.*/
+  // If we have gotten this far, we have looped through all of the perpendicular edges no projections had a gap in them. Thus the 2 polygons are colliding.
   return true;
 }
 
@@ -476,36 +460,3 @@ function printEnemyXY() {
   esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
   estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
 }
-// bulletXY() {
-//   var dx = mouseX + this.width - mouseX;
-//   var dy = mouseY + this.height - mouseY;
-//   var length = Math.sqrt(dx * dx + dy * dy);
-//   var bulletAngle = Math.atan2(dy, dx);
-//   var screenX = mouseX + length * Math.cos(bulletAngle + this.rotationAngle);
-//   var screenY = mouseY + length * Math.sin(bulletAngle + this.rotationAngle);
-//   return { x: screenX, y: screenY };
-// }
-
-// NOTE: Could use this instead of current angle calculation...
-//   drawLineToAngle() {
-//
-//     this.rotationAngle *= Math.PI / 180;
-//
-//     var x2 = this.position.x + this.length * Math.cos(this.rotationAngle),
-//         y2 = this.position.y + this.length * Math.sin(this.rotationAngle);
-//
-//     context.moveTo(this.position.x, this.position.y);
-//     context.lineTo(x2, y2);
-//     context.stroke();
-//
-//     return {x: x2, y: y2};
-// }
-
-// TODO: This is not taking into account angle.. do you need to do some mathy shit? --> See chat :D
-// replace mouseY with screenY and mouseX
-// this.boundary = {
-//   top: mouseY - this.height,
-//   bottom: mouseY,
-//   left: mouseX - this.width / 2,
-//   right: mouseX + this.width / 2,
-// };
