@@ -10,14 +10,14 @@ const blu = '#6a6aff';
 const grn = '#bad500';
 const red = '#ff6a6a';
 const gry = '#6a6a6a';
-const pstr = document.getElementById('psTopRight');
-const psbr = document.getElementById('psBottomRight');
-const psbl = document.getElementById('psBottomLeft');
-const pstl = document.getElementById('psTopLeft');
-const estr = document.getElementById('esTopRight');
-const esbr = document.getElementById('esBottomRight');
-const esbl = document.getElementById('esBottomLeft');
-const estl = document.getElementById('esTopLeft');
+// const pstr = document.getElementById('psTopRight');
+// const psbr = document.getElementById('psBottomRight');
+// const psbl = document.getElementById('psBottomLeft');
+// const pstl = document.getElementById('psTopLeft');
+// const estr = document.getElementById('esTopRight');
+// const esbr = document.getElementById('esBottomRight');
+// const esbl = document.getElementById('esBottomLeft');
+// const estl = document.getElementById('esTopLeft');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -165,7 +165,6 @@ function rotatedCoordinatesHelper(
 function getRotatedCoordinates(sword) {
   let centerX = sword.position.x + sword.width / 2;
   let centerY = sword.position.y + sword.height;
-  //Work out the new locations
   let topLeft = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -173,7 +172,7 @@ function getRotatedCoordinates(sword) {
     sword.position.y,
     sword.rotationAngle
   );
-  pstl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
+  // pstl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
   let topRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -181,7 +180,7 @@ function getRotatedCoordinates(sword) {
     sword.position.y,
     sword.rotationAngle
   );
-  pstr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
+  // pstr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
   let bottomLeft = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -189,8 +188,7 @@ function getRotatedCoordinates(sword) {
     sword.position.y + sword.height,
     sword.rotationAngle
   );
-  psbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
-
+  // psbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
   let bottomRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -198,8 +196,8 @@ function getRotatedCoordinates(sword) {
     sword.position.y + sword.height,
     sword.rotationAngle
   );
-  psbr.textContent =
-    Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
+  // psbr.textContent =
+  //   Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
   return {
     topLeft: topLeft,
     topRight: topRight,
@@ -350,7 +348,6 @@ function detectRectangleCollision(index) {
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
     thisSword.color = 'red';
-    console.log('COLLIDE!!!!');
   } else {
     thisSword.color = 'saddlebrown';
     //Below covers the case of two swords with rotationAngle 0
@@ -437,26 +434,26 @@ function gameLoop() {
   activeSwords.forEach((sword, index) => {
     detectRectangleCollision(index);
   });
-  printEnemyXY();
+  // printEnemyXY();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
 
-function printEnemyXY() {
-  let topRight = {
-    x: es.position.x + es.width / 2,
-    y: es.position.y + es.height,
-  };
-  let bottomRight = { x: es.position.x + es.width / 2, y: es.position.y };
-  let bottomLeft = { x: es.position.x - es.width / 2, y: es.position.y };
-  let topLeft = {
-    x: es.position.x - es.width / 2,
-    y: es.position.y + es.height,
-  };
-
-  estr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
-  esbr.textContent =
-    Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
-  esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
-  estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
-}
+// function printEnemyXY() {
+//   let topRight = {
+//     x: es.position.x + es.width / 2,
+//     y: es.position.y + es.height,
+//   };
+//   let bottomRight = { x: es.position.x + es.width / 2, y: es.position.y };
+//   let bottomLeft = { x: es.position.x - es.width / 2, y: es.position.y };
+//   let topLeft = {
+//     x: es.position.x - es.width / 2,
+//     y: es.position.y + es.height,
+//   };
+//
+//   estr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
+//   esbr.textContent =
+//     Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
+//   esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
+//   estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
+// }
