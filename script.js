@@ -10,6 +10,14 @@ const blu = '#6a6aff';
 const grn = '#bad500';
 const red = '#ff6a6a';
 const gry = '#6a6a6a';
+const pstr = document.getElementById('psTopRight');
+const psbr = document.getElementById('psBottomRight');
+const psbl = document.getElementById('psBottomLeft');
+const pstl = document.getElementById('psTopLeft');
+const estr = document.getElementById('esTopRight');
+const esbr = document.getElementById('esBottomRight');
+const esbl = document.getElementById('esBottomLeft');
+const estl = document.getElementById('esTopLeft');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -133,7 +141,6 @@ class EnemySword extends Sword {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
-      // rotationAngle: getRandomInt(0, 360), // TODO: this doesn't work right now, probably because I don't have a "check enemySwordRotation function"
     });
   }
 }
@@ -143,7 +150,7 @@ const es = new EnemySword();
 //                                        Collision Detection                                       //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // NOTE: Major credit to Qixotl LFC: https://www.youtube.com/watch?v=MvlhMEE9zuc
-function getRotatedCoordinatesHelper(
+function rotatedCoordinatesHelper(
   centerX,
   centerY,
   vertexX,
@@ -156,11 +163,11 @@ function getRotatedCoordinatesHelper(
   let dy = vertexY - centerY;
   let distance = Math.sqrt(dx * dx + dy * dy);
   let originalAngle = Math.atan2(dy, dx);
-  console.log(originalAngle);
 
   let rotatedX = centerX + distance * Math.cos(originalAngle + rotatedAngle);
   let rotatedY = centerY + distance * Math.sin(originalAngle + rotatedAngle);
 
+  console.log(rotatedX, rotatedY);
   return {
     x: rotatedX,
     y: rotatedY,
@@ -170,36 +177,42 @@ function getRotatedCoordinatesHelper(
 //Get the rotated coordinates for the sword
 function getRotatedCoordinates(sword) {
   let centerX = sword.position.x + sword.width / 2;
-  let centerY = sword.position.y + sword.height / 2;
+  let centerY = sword.position.y + sword.height;
   //Work out the new locations
-  let topLeft = getRotatedCoordinatesHelper(
+  let topLeft = rotatedCoordinatesHelper(
     centerX,
     centerY,
     sword.position.x,
     sword.position.y,
     sword.rotationAngle
   );
-  let topRight = getRotatedCoordinatesHelper(
+  pstl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
+  let topRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
     sword.position.x + sword.width,
     sword.position.y,
     sword.rotationAngle
   );
-  let bottomLeft = getRotatedCoordinatesHelper(
+  pstr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
+  let bottomLeft = rotatedCoordinatesHelper(
     centerX,
     centerY,
     sword.position.x,
     sword.position.y + sword.height,
     sword.rotationAngle
   );
-  let bottomRight = getRotatedCoordinatesHelper(
+  psbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
+
+  let bottomRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
-    sword.position.x + sword.width,
+    sword.position.x + sword.width / 2,
     sword.position.y + sword.height,
     sword.rotationAngle
   );
+  psbr.textContent =
+    Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
   return {
     topLeft: topLeft,
     topRight: topRight,
@@ -440,10 +453,29 @@ function gameLoop() {
   activeSwords.forEach((sword, index) => {
     detectRectangleCollision(index);
   });
+  printEnemyXY();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
 
+function printEnemyXY() {
+  let topRight = {
+    x: es.position.x + es.width / 2,
+    y: es.position.y + es.height,
+  };
+  let bottomRight = { x: es.position.x + es.width / 2, y: es.position.y };
+  let bottomLeft = { x: es.position.x - es.width / 2, y: es.position.y };
+  let topLeft = {
+    x: es.position.x - es.width / 2,
+    y: es.position.y + es.height,
+  };
+
+  estr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
+  esbr.textContent =
+    Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
+  esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
+  estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
+}
 // bulletXY() {
 //   var dx = mouseX + this.width - mouseX;
 //   var dy = mouseY + this.height - mouseY;
