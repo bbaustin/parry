@@ -27,20 +27,28 @@ class Sword {
   constructor({
     position = { x: 0, y: 0 },
     color = gry,
+    defaultColor = gry,
+    collidingColor = red,
     width = 10,
     height = 100,
     rotationAngle = 0,
+    isColliding = false,
   }) {
     this.position = position;
     this.color = color;
+    this.defaultColor = defaultColor;
+    this.collidingColor = collidingColor;
     this.width = width;
     this.height = height;
     this.rotationAngle = rotationAngle;
+    this.isColliding = isColliding;
   }
 
   draw(swordPosX, swordPosY) {
     context.beginPath();
-    context.fillStyle = this.color;
+    !this.isColliding
+      ? (context.fillStyle = this.color)
+      : (context.fillStyle = this.collidingColor);
     context.fillRect(
       swordPosX - this.width / 2,
       swordPosY - this.height,
@@ -59,6 +67,8 @@ class PlayerSword extends Sword {
     super({
       position: { x: mouseX, y: mouseY },
       color: blu,
+      defaultColor: blu,
+      collidingColor: grn,
     });
   }
 
@@ -128,6 +138,8 @@ class EnemySword extends Sword {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
+      defaultColor: red,
+      collidingColor: gry,
     });
   }
 }
@@ -347,9 +359,11 @@ function detectRectangleCollision(index) {
   let otherRectPolygon = new polygon(otherSwordVertices, otherSwordEdges);
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
-    thisSword.color = 'red';
+    thisSword.isColliding = true;
+    thisSword.color = thisSword.collidingColor;
   } else {
-    thisSword.color = 'saddlebrown';
+    thisSword.isColliding = false;
+    thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
     if (thisSword.rotationAngle === 0 && otherSword.rotationAngle === 0) {
       if (
@@ -360,7 +374,7 @@ function detectRectangleCollision(index) {
           thisSword.position.y + thisSword.height < otherSword.position.y
         )
       ) {
-        thisSword.color = 'red';
+        thisSword.color = red;
       }
     }
   }
