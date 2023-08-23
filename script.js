@@ -48,13 +48,28 @@ class Sword {
     context.beginPath();
     !this.isColliding
       ? (context.fillStyle = this.color)
-      : (context.fillStyle = this.collidingColor);
+      : (context.fillStyle = this.makeGradient());
     context.fillRect(
       swordPosX - this.width / 2,
       swordPosY - this.height,
       this.width,
       this.height
     );
+  }
+  makeGradient() {
+    const first = this.position.x - this.width / 2;
+    const second = this.position.y;
+    const third = this.position.x + this.width / 2;
+    const fourth = this.position.y - this.height;
+    const colorStopBeg = 0;
+    const colorStopMid = 0.5;
+    const colorStopEnd = 1.0;
+    const gradient = context.createLinearGradient(first, second, third, fourth);
+    gradient.addColorStop(colorStopBeg, 'purple');
+    gradient.addColorStop(colorStopMid, 'purple');
+    gradient.addColorStop(colorStopMid, 'hotpink');
+    gradient.addColorStop(colorStopEnd, 'hotpink');
+    return gradient;
   }
 }
 
@@ -435,19 +450,39 @@ function getRandomLocation() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
+const es2 = new EnemySword();
+es2.position = { x: 100, y: 100 };
 const activeSwords = [ps, es];
+// Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
+
+// TODO: Later, add "pattern" as a parameter
+function addEnemySwords() {
+  if (tick % 300 === 0) {
+    const newEs = new EnemySword();
+    const randomLocation = getRandomLocation();
+    newEs.position = randomLocation;
+    newEs.rotationAngle = getRandomInt(0, 360);
+    activeSwords.push(newEs);
+    console.log(newEs);
+    console.log(activeSwords);
+  }
+}
+
 activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
 });
 
+let tick = 0;
 function gameLoop() {
+  tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
-  es.draw(es.position.x, es.position.y);
+  // es.draw(es.position.x, es.position.y);
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
     detectRectangleCollision(index);
+    sword.draw(sword.position.x, sword.position.y);
   });
+  addEnemySwords();
   // printEnemyXY();
   requestAnimationFrame(gameLoop);
 }
