@@ -10,6 +10,9 @@ const blu = '#6a6aff';
 const grn = '#bad500';
 const red = '#ff6a6a';
 const gry = '#6a6a6a';
+// Refers to frame of gameLoop. Used for some timing stuff
+let tick = 0;
+
 // const pstr = document.getElementById('psTopRight');
 // const psbr = document.getElementById('psBottomRight');
 // const psbl = document.getElementById('psBottomLeft');
@@ -27,26 +30,62 @@ class Sword {
   constructor({
     position = { x: 0, y: 0 },
     color = gry,
+    defaultColor = gry,
+    collidingColor = red,
     width = 10,
     height = 100,
     rotationAngle = 0,
+    isColliding = false,
   }) {
     this.position = position;
     this.color = color;
+    this.defaultColor = defaultColor;
+    this.collidingColor = collidingColor;
     this.width = width;
     this.height = height;
     this.rotationAngle = rotationAngle;
+    this.isColliding = isColliding;
   }
 
-  draw(swordPosX, swordPosY) {
+  draw() {
     context.beginPath();
-    context.fillStyle = this.color;
+    !this.isColliding
+      ? (context.fillStyle = this.color)
+      : (context.fillStyle = this.makeGradient());
     context.fillRect(
-      swordPosX - this.width / 2,
-      swordPosY - this.height,
+      this.position.x - this.width / 2,
+      this.position.y - this.height,
       this.width,
       this.height
     );
+  }
+
+  drawRotation() {
+    // Save the context state before transformations
+    context.save();
+    // Apply rotation at the calculated center point
+    context.translate(this.position.x, this.position.y);
+    context.rotate((this.rotationAngle * Math.PI) / 180);
+    context.translate(-this.position.x, -this.position.y);
+    this.draw();
+    // Restore the original context state
+    context.restore();
+  }
+
+  makeGradient() {
+    const first = this.position.x - this.width / 2;
+    const second = this.position.y;
+    const third = this.position.x + this.width / 2;
+    const fourth = this.position.y - this.height;
+    const colorStopBeg = 0;
+    const colorStopMid = 0.5;
+    const colorStopEnd = 1.0;
+    const gradient = context.createLinearGradient(first, second, third, fourth);
+    gradient.addColorStop(colorStopBeg, 'purple');
+    gradient.addColorStop(colorStopMid, 'purple');
+    gradient.addColorStop(colorStopMid, 'hotpink');
+    gradient.addColorStop(colorStopEnd, 'hotpink');
+    return gradient;
   }
 }
 
@@ -59,6 +98,8 @@ class PlayerSword extends Sword {
     super({
       position: { x: mouseX, y: mouseY },
       color: blu,
+      defaultColor: blu,
+      collidingColor: grn,
     });
   }
 
@@ -73,15 +114,7 @@ class PlayerSword extends Sword {
     if (keyStateForPlayerSwordRotation.e && this.rotationAngle <= 81) {
       this.rotationAngle += angleInDegrees;
     }
-    // Save the context state before transformations
-    context.save();
-    // Apply rotation at the calculated center point
-    context.translate(mouseX, mouseY);
-    context.rotate((this.rotationAngle * Math.PI) / 180);
-    context.translate(-mouseX, -mouseY);
-    this.draw(mouseX, mouseY);
-    // Restore the original context state
-    context.restore();
+    this.drawRotation();
   }
 }
 
@@ -124,11 +157,35 @@ document.addEventListener('keyup', (event) => {
 // NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
-  constructor() {
+  constructor(id = tick, timeSpentColliding = 0, parried = false) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
+      defaultColor: red,
+      collidingColor: gry,
     });
+    this.id = id;
+    this.timeSpentColliding = timeSpentColliding;
+    this.parried = parried;
+  }
+  timeSpentColliding = this.timeSpentColliding;
+  computeTimeToDeletion() {
+    if (this.timeSpentColliding >= 100) {
+      console.log(
+        Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle))
+      );
+      // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
+      // const indexToDelete = activeSwords.findIndex((sword) => {
+      //   return sword.id === this.id;
+      // });
+      // activeSwords.splice(indexToDelete, 1);
+      this.parried = true;
+    }
+    if (this.isColliding) {
+      this.timeSpentColliding++;
+    } else {
+      if (this.timeSpentColliding > 0) this.timeSpentColliding--;
+    }
   }
 }
 const es = new EnemySword();
@@ -347,9 +404,11 @@ function detectRectangleCollision(index) {
   let otherRectPolygon = new polygon(otherSwordVertices, otherSwordEdges);
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
-    thisSword.color = 'red';
+    thisSword.isColliding = true;
+    thisSword.color = thisSword.collidingColor;
   } else {
-    thisSword.color = 'saddlebrown';
+    thisSword.isColliding = false;
+    thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
     if (thisSword.rotationAngle === 0 && otherSword.rotationAngle === 0) {
       if (
@@ -360,7 +419,7 @@ function detectRectangleCollision(index) {
           thisSword.position.y + thisSword.height < otherSword.position.y
         )
       ) {
-        thisSword.color = 'red';
+        thisSword.color = red;
       }
     }
   }
@@ -421,19 +480,41 @@ function getRandomLocation() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
+const es2 = new EnemySword();
+es2.position = { x: 100, y: 100 };
 const activeSwords = [ps, es];
+// Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
+
+// TODO: Later, add "pattern" as a parameter
+function addEnemySwords() {
+  if (tick % 300 === 0) {
+    const newEs = new EnemySword();
+    const randomLocation = getRandomLocation();
+    newEs.position = randomLocation;
+    newEs.rotationAngle = getRandomInt(-90, 90);
+    activeSwords.push(newEs);
+    console.log(newEs);
+    console.log(activeSwords);
+  }
+}
+
 activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
 });
 
 function gameLoop() {
+  tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
-  es.draw(es.position.x, es.position.y);
+  // es.draw(es.position.x, es.position.y);
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
+    if (index === 0) return;
+    if (sword.parried) return;
     detectRectangleCollision(index);
+    sword.drawRotation();
+    sword.computeTimeToDeletion();
   });
+  addEnemySwords();
   // printEnemyXY();
   requestAnimationFrame(gameLoop);
 }
