@@ -10,6 +10,9 @@ const blu = '#6a6aff';
 const grn = '#bad500';
 const red = '#ff6a6a';
 const gry = '#6a6a6a';
+// Refers to frame of gameLoop. Used for some timing stuff
+let tick = 0;
+
 // const pstr = document.getElementById('psTopRight');
 // const psbr = document.getElementById('psBottomRight');
 // const psbl = document.getElementById('psBottomLeft');
@@ -154,13 +157,35 @@ document.addEventListener('keyup', (event) => {
 // NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
-  constructor() {
+  constructor(id = tick, timeSpentColliding = 0, parried = false) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
       defaultColor: red,
       collidingColor: gry,
     });
+    this.id = id;
+    this.timeSpentColliding = timeSpentColliding;
+    this.parried = parried;
+  }
+  timeSpentColliding = this.timeSpentColliding;
+  computeTimeToDeletion() {
+    if (this.timeSpentColliding >= 100) {
+      console.log(
+        Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle))
+      );
+      // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
+      // const indexToDelete = activeSwords.findIndex((sword) => {
+      //   return sword.id === this.id;
+      // });
+      // activeSwords.splice(indexToDelete, 1);
+      this.parried = true;
+    }
+    if (this.isColliding) {
+      this.timeSpentColliding++;
+    } else {
+      if (this.timeSpentColliding > 0) this.timeSpentColliding--;
+    }
   }
 }
 const es = new EnemySword();
@@ -466,7 +491,7 @@ function addEnemySwords() {
     const newEs = new EnemySword();
     const randomLocation = getRandomLocation();
     newEs.position = randomLocation;
-    newEs.rotationAngle = getRandomInt(0, 360);
+    newEs.rotationAngle = getRandomInt(-90, 90);
     activeSwords.push(newEs);
     console.log(newEs);
     console.log(activeSwords);
@@ -477,15 +502,17 @@ activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
 });
 
-let tick = 0;
 function gameLoop() {
   tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
   // es.draw(es.position.x, es.position.y);
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
+    if (index === 0) return;
+    if (sword.parried) return;
     detectRectangleCollision(index);
     sword.drawRotation();
+    sword.computeTimeToDeletion();
   });
   addEnemySwords();
   // printEnemyXY();
