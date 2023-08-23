@@ -44,18 +44,31 @@ class Sword {
     this.isColliding = isColliding;
   }
 
-  draw(swordPosX, swordPosY) {
+  draw() {
     context.beginPath();
     !this.isColliding
       ? (context.fillStyle = this.color)
       : (context.fillStyle = this.makeGradient());
     context.fillRect(
-      swordPosX - this.width / 2,
-      swordPosY - this.height,
+      this.position.x - this.width / 2,
+      this.position.y - this.height,
       this.width,
       this.height
     );
   }
+
+  drawRotation() {
+    // Save the context state before transformations
+    context.save();
+    // Apply rotation at the calculated center point
+    context.translate(this.position.x, this.position.y);
+    context.rotate((this.rotationAngle * Math.PI) / 180);
+    context.translate(-this.position.x, -this.position.y);
+    this.draw();
+    // Restore the original context state
+    context.restore();
+  }
+
   makeGradient() {
     const first = this.position.x - this.width / 2;
     const second = this.position.y;
@@ -98,15 +111,7 @@ class PlayerSword extends Sword {
     if (keyStateForPlayerSwordRotation.e && this.rotationAngle <= 81) {
       this.rotationAngle += angleInDegrees;
     }
-    // Save the context state before transformations
-    context.save();
-    // Apply rotation at the calculated center point
-    context.translate(mouseX, mouseY);
-    context.rotate((this.rotationAngle * Math.PI) / 180);
-    context.translate(-mouseX, -mouseY);
-    this.draw(mouseX, mouseY);
-    // Restore the original context state
-    context.restore();
+    this.drawRotation();
   }
 }
 
@@ -480,7 +485,7 @@ function gameLoop() {
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
     detectRectangleCollision(index);
-    sword.draw(sword.position.x, sword.position.y);
+    sword.drawRotation();
   });
   addEnemySwords();
   // printEnemyXY();
