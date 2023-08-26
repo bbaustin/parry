@@ -151,10 +151,7 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Let the color change
 // Timing
-// Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
-// + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
 
-// NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
   constructor(id = tick, timeSpentColliding = 0, parried = false) {
@@ -189,6 +186,61 @@ class EnemySword extends Sword {
   }
 }
 const es = new EnemySword();
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Enemy Patterns                                         //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 0- info (start screen or score from last)
+ * 1- play (show canvas)
+ */
+const gameState = 0;
+function increaseGameState() {
+  if (gameState === 0) return (gameState = 1);
+  return (gameState = 0);
+}
+
+//const enemyPatterns = ['peasant', 'barbarian', 'dual wielder', 'duelist', 'paladin', 'crusader'];
+/**
+ * 0 - peasant (random)
+ * 1 - barbarian (straight line attacks)
+ * 2 - dual wielder (close by attacks)
+ * 3 - duelist (up and down with opposite angles)
+ * 4 - paladin/high-int barb (straight line attacks but random angles)
+ * 5 - crusader (far away attacks)
+ */
+const enemyState = 0;
+
+// TODO: Later, add "pattern" as a parameter
+let pushedSwords = 0;
+
+/////////
+function peasant() {
+  if (pushedSwords < 5) {
+    pushPeasantSword(400);
+  } else if (pushedSwords < 10) pushPeasantSword(200);
+  else {
+    pushedSwords = 0;
+    increaseGameState();
+    enemyState++;
+  }
+}
+
+function pushPeasantSword(msDelay) {
+  if (tick % msDelay === 0) {
+    console.log(tick, msDelay);
+    const newEs = new EnemySword();
+    const randomLocation = getRandomLocation();
+    newEs.position = randomLocation;
+    newEs.rotationAngle = getRandomInt(-90, 90);
+    activeSwords.push(newEs);
+    pushedSwords++;
+  }
+}
+
+/////////
+function barbarian() {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                        Collision Detection                                       //
@@ -471,9 +523,10 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+//TODO: Is this logic right? No OOB
 function getRandomLocation() {
-  const randomX = Math.random() * canvas.width;
-  const randomY = Math.random() * canvas.height;
+  const randomX = getRandomInt(100, canvas.width - 100);
+  const randomY = getRandomInt(100, canvas.height - 100);
   return { x: randomX, y: randomY };
 }
 
@@ -483,20 +536,6 @@ function getRandomLocation() {
 const es2 = new EnemySword();
 es2.position = { x: 100, y: 100 };
 const activeSwords = [ps, es];
-// Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
-
-// TODO: Later, add "pattern" as a parameter
-function addEnemySwords() {
-  if (tick % 300 === 0) {
-    const newEs = new EnemySword();
-    const randomLocation = getRandomLocation();
-    newEs.position = randomLocation;
-    newEs.rotationAngle = getRandomInt(-90, 90);
-    activeSwords.push(newEs);
-    console.log(newEs);
-    console.log(activeSwords);
-  }
-}
 
 activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
@@ -505,7 +544,6 @@ activeSwords.forEach((sword, index) => {
 function gameLoop() {
   tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
-  // es.draw(es.position.x, es.position.y);
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
     if (index === 0) return;
@@ -514,27 +552,7 @@ function gameLoop() {
     sword.drawRotation();
     sword.computeTimeToDeletion();
   });
-  addEnemySwords();
-  // printEnemyXY();
+  peasant();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-// function printEnemyXY() {
-//   let topRight = {
-//     x: es.position.x + es.width / 2,
-//     y: es.position.y + es.height,
-//   };
-//   let bottomRight = { x: es.position.x + es.width / 2, y: es.position.y };
-//   let bottomLeft = { x: es.position.x - es.width / 2, y: es.position.y };
-//   let topLeft = {
-//     x: es.position.x - es.width / 2,
-//     y: es.position.y + es.height,
-//   };
-//
-//   estr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
-//   esbr.textContent =
-//     Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
-//   esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
-//   estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
-// }
