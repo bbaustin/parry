@@ -257,13 +257,25 @@ function barbarian() {
   }
 }
 
+function paladin() {
+  if (pushedSwords < 4) {
+    pushBarbarianSword(50, getRandomInt(0, 359), 100);
+  } else if (pushedSwords < 8) {
+    pushBarbarianSword(50, getRandomInt(0, 359), 225);
+  } else if (pushedSwords < 12) {
+    pushBarbarianSword(50, getRandomInt(0, 359), 350);
+  } else if (pushedSwords < 16) {
+    pushBarbarianSword(50, getRandomInt(-90, 90), 475);
+  }
+}
+
 function pushBarbarianSword(msDelay, angle, y) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
     // TODO: Figure out why getting from a function works, but assigning directly doesn't lol...
     const location = getRandomConstrainedLocation(
-      (pushedSwords % 4) * 175 + 50,
-      (pushedSwords % 4) * 175 + 50,
+      (pushedSwords % 4) * 150 + 100,
+      (pushedSwords % 4) * 150 + 100,
       y,
       y
     );
@@ -606,6 +618,7 @@ function gameLoop() {
   });
   // peasant();
   barbarian();
+  //  paladin();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
