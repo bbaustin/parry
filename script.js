@@ -12,15 +12,8 @@ const red = '#ff6a6a';
 const gry = '#6a6a6a';
 // Refers to frame of gameLoop. Used for some timing stuff
 let tick = 0;
-
-// const pstr = document.getElementById('psTopRight');
-// const psbr = document.getElementById('psBottomRight');
-// const psbl = document.getElementById('psBottomLeft');
-// const pstl = document.getElementById('psTopLeft');
-// const estr = document.getElementById('esTopRight');
-// const esbr = document.getElementById('esBottomRight');
-// const esbl = document.getElementById('esBottomLeft');
-// const estl = document.getElementById('esTopLeft');
+let score = 0;
+const scoreBoard = document.getElementById('scoreBoard');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -170,10 +163,12 @@ class EnemySword extends Sword {
   }
   timeSpentColliding = this.timeSpentColliding;
   computeTimeToDeletion() {
-    if (this.timeSpentColliding >= 10000) {
-      console.log(
-        Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle))
-      );
+    if (this.timeSpentColliding >= 100) {
+      const addedScore =
+        90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
+      console.log(addedScore);
+      score += addedScore;
+      scoreBoard.textContent = score;
       // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
       // const indexToDelete = activeSwords.findIndex((sword) => {
       //   return sword.id === this.id;
@@ -219,7 +214,9 @@ let enemyState = 0;
 // TODO: Later, add "pattern" as a parameter
 let pushedSwords = 0;
 
-/////////
+/////////////
+// Enemies //
+////////////
 function peasant() {
   if (pushedSwords < 5) {
     pushPeasantSword(400);
@@ -231,6 +228,39 @@ function peasant() {
   }
 }
 
+function barbarian() {
+  if (pushedSwords < 4) {
+    pushBarbarianOrPaladinSword(50, 90, 100);
+  } else if (pushedSwords < 8) {
+    pushBarbarianOrPaladinSword(50, 0, 225);
+  } else if (pushedSwords < 12) {
+    pushBarbarianOrPaladinSword(50, 90, 350);
+  } else if (pushedSwords < 16) {
+    pushBarbarianOrPaladinSword(50, 0, 475);
+  }
+}
+
+function paladin() {
+  if (pushedSwords < 4) {
+    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 100);
+  } else if (pushedSwords < 8) {
+    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 225);
+  } else if (pushedSwords < 12) {
+    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 350);
+  } else if (pushedSwords < 16) {
+    pushBarbarianOrPaladinSword(50, getRandomInt(-90, 90), 475);
+  }
+}
+
+function duelist() {}
+
+function dualWieler() {}
+
+function crusader() {}
+
+/////////////////
+// Enemy Utils //
+////////////////
 function pushPeasantSword(msDelay) {
   if (tick % msDelay === 0) {
     console.log(tick, msDelay);
@@ -244,32 +274,7 @@ function pushPeasantSword(msDelay) {
   }
 }
 
-/////////
-function barbarian() {
-  if (pushedSwords < 4) {
-    pushBarbarianSword(50, 90, 100);
-  } else if (pushedSwords < 8) {
-    pushBarbarianSword(50, 0, 225);
-  } else if (pushedSwords < 12) {
-    pushBarbarianSword(50, 90, 350);
-  } else if (pushedSwords < 16) {
-    pushBarbarianSword(50, 0, 475);
-  }
-}
-
-function paladin() {
-  if (pushedSwords < 4) {
-    pushBarbarianSword(50, getRandomInt(0, 359), 100);
-  } else if (pushedSwords < 8) {
-    pushBarbarianSword(50, getRandomInt(0, 359), 225);
-  } else if (pushedSwords < 12) {
-    pushBarbarianSword(50, getRandomInt(0, 359), 350);
-  } else if (pushedSwords < 16) {
-    pushBarbarianSword(50, getRandomInt(-90, 90), 475);
-  }
-}
-
-function pushBarbarianSword(msDelay, angle, y) {
+function pushBarbarianOrPaladinSword(msDelay, angle, y) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
     // TODO: Figure out why getting from a function works, but assigning directly doesn't lol...
