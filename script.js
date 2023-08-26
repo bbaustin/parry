@@ -170,7 +170,7 @@ class EnemySword extends Sword {
   }
   timeSpentColliding = this.timeSpentColliding;
   computeTimeToDeletion() {
-    if (this.timeSpentColliding >= 100) {
+    if (this.timeSpentColliding >= 10000) {
       console.log(
         Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle))
       );
@@ -189,7 +189,90 @@ class EnemySword extends Sword {
   }
 }
 const es = new EnemySword();
+es.color = 'saddlebrown';
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Enemy Patterns                                         //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 0- info (start screen or score from last)
+ * 1- play (show canvas)
+ */
+let gameState = 0;
+function increaseGameState() {
+  if (gameState === 0) return (gameState = 1);
+  return (gameState = 0);
+}
+
+//const enemyPatterns = ['peasant', 'barbarian', 'dual wielder', 'duelist', 'paladin', 'crusader'];
+/**
+ * 0 - peasant (random)
+ * 1 - barbarian (straight line attacks)
+ * 2 - dual wielder (close by attacks)
+ * 3 - duelist (up and down with opposite angles)
+ * 4 - paladin/high-int barb (straight line attacks but random angles)
+ * 5 - crusader (far away attacks)
+ */
+let enemyState = 0;
+
+// TODO: Later, add "pattern" as a parameter
+let pushedSwords = 0;
+
+/////////
+function peasant() {
+  if (pushedSwords < 5) {
+    pushPeasantSword(400);
+  } else if (pushedSwords < 10) pushPeasantSword(200);
+  else {
+    pushedSwords = 0;
+    increaseGameState();
+    enemyState++;
+  }
+}
+
+function pushPeasantSword(msDelay) {
+  if (tick % msDelay === 0) {
+    console.log(tick, msDelay);
+    const newEs = new EnemySword();
+    const randomLocation = getRandomLocation();
+    newEs.position = randomLocation;
+    newEs.rotationAngle = Math.random() > 0.5 ? 90 : 0; // getRandomInt(-90, 90)
+    activeSwords.push(newEs);
+    pushedSwords++;
+    console.log(activeSwords);
+  }
+}
+
+/////////
+function barbarian() {
+  if (pushedSwords < 4) {
+    pushBarbarianSword(50, 90, 100);
+  } else if (pushedSwords < 8) {
+    pushBarbarianSword(50, 0, 225);
+  } else if (pushedSwords < 12) {
+    pushBarbarianSword(50, 90, 350);
+  } else if (pushedSwords < 16) {
+    pushBarbarianSword(50, 0, 475);
+  }
+}
+
+function pushBarbarianSword(msDelay, angle, y) {
+  if (tick % msDelay === 0) {
+    const newEs = new EnemySword();
+    // TODO: Figure out why getting from a function works, but assigning directly doesn't lol...
+    const location = getRandomConstrainedLocation(
+      (pushedSwords % 4) * 175 + 50,
+      (pushedSwords % 4) * 175 + 50,
+      y,
+      y
+    );
+    newEs.position = location;
+    newEs.rotationAngle = angle;
+    activeSwords.push(newEs);
+    pushedSwords++;
+  }
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                        Collision Detection                                       //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,7 +493,8 @@ function detectRectangleCollision(index) {
     thisSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
-    if (thisSword.rotationAngle === 0 && otherSword.rotationAngle === 0) {
+    if (thisSword.rotationAngle === 0 || otherSword.rotationAngle === 0) {
+      // TODO: Only this case??
       if (
         !(
           thisSword.position.x > otherSword.position.x + otherSword.width ||
@@ -472,8 +556,14 @@ function getRandomInt(min, max) {
 }
 
 function getRandomLocation() {
-  const randomX = Math.random() * canvas.width;
-  const randomY = Math.random() * canvas.height;
+  const randomX = 100 + Math.random() * (canvas.width - 100);
+  const randomY = 100 + Math.random() * (canvas.height - 100);
+  return { x: randomX, y: randomY };
+}
+
+function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
+  const randomX = Math.random() * (xMax - xMin + 1) + xMin;
+  const randomY = Math.random() * (yMax - yMin + 1) + yMin;
   return { x: randomX, y: randomY };
 }
 
@@ -485,18 +575,18 @@ es2.position = { x: 100, y: 100 };
 const activeSwords = [ps, es];
 // Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
 
-// TODO: Later, add "pattern" as a parameter
-function addEnemySwords() {
-  if (tick % 300 === 0) {
-    const newEs = new EnemySword();
-    const randomLocation = getRandomLocation();
-    newEs.position = randomLocation;
-    newEs.rotationAngle = getRandomInt(-90, 90);
-    activeSwords.push(newEs);
-    console.log(newEs);
-    console.log(activeSwords);
-  }
-}
+// // TODO: Later, add "pattern" as a parameter
+// function addEnemySwords() {
+//   if (tick % 300 === 0) {
+//     const newEs = new EnemySword();
+//     const randomLocation = getRandomLocation();
+//     newEs.position = randomLocation;
+//     newEs.rotationAngle = Math.random() > 0.5 ? 90 : 0;
+//     activeSwords.push(newEs);
+//     console.log(newEs);
+//     console.log(activeSwords);
+//   }
+// }
 
 activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
@@ -514,27 +604,8 @@ function gameLoop() {
     sword.drawRotation();
     sword.computeTimeToDeletion();
   });
-  addEnemySwords();
-  // printEnemyXY();
+  // peasant();
+  barbarian();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-// function printEnemyXY() {
-//   let topRight = {
-//     x: es.position.x + es.width / 2,
-//     y: es.position.y + es.height,
-//   };
-//   let bottomRight = { x: es.position.x + es.width / 2, y: es.position.y };
-//   let bottomLeft = { x: es.position.x - es.width / 2, y: es.position.y };
-//   let topLeft = {
-//     x: es.position.x - es.width / 2,
-//     y: es.position.y + es.height,
-//   };
-//
-//   estr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
-//   esbr.textContent =
-//     Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
-//   esbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
-//   estl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
-// }
