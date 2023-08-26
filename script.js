@@ -183,8 +183,6 @@ class EnemySword extends Sword {
     }
   }
 }
-const es = new EnemySword();
-es.color = 'saddlebrown';
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Patterns                                         //
@@ -254,7 +252,7 @@ function paladin() {
 
 function duelist() {}
 
-function dualWieler() {}
+function dualWielder() {}
 
 function crusader() {}
 
@@ -443,11 +441,12 @@ function isColliding(polygonA, polygonB) {
 
 //Detect for a collision between the 2 rectangles
 function detectRectangleCollision(index) {
-  let thisSword = activeSwords[index];
-  let otherSword = index === 0 ? activeSwords[1] : activeSwords[0];
+  if (index === 0) return;
+  const thisSword = activeSwords[index];
+  const playerSword = activeSwords[0];
   //Get rotated coordinates for both rectangles
   let thisSwordRotatedXY = getRotatedCoordinates(thisSword);
-  let otherSwordRotatedXY = getRotatedCoordinates(otherSword);
+  let playerSwordRotatedXY = getRotatedCoordinates(playerSword);
   //Vertices & Edges are listed in clockwise order. Starting from the top right
   let thisSwordVertices = [
     new xy(thisSwordRotatedXY.topRight.x, thisSwordRotatedXY.topRight.y),
@@ -473,35 +472,38 @@ function detectRectangleCollision(index) {
       thisSwordRotatedXY.topRight.y - thisSwordRotatedXY.topLeft.y
     ),
   ];
-  let otherSwordVertices = [
-    new xy(otherSwordRotatedXY.topRight.x, otherSwordRotatedXY.topRight.y),
+  let playerSwordVertices = [
+    new xy(playerSwordRotatedXY.topRight.x, playerSwordRotatedXY.topRight.y),
     new xy(
-      otherSwordRotatedXY.bottomRight.x,
-      otherSwordRotatedXY.bottomRight.y
+      playerSwordRotatedXY.bottomRight.x,
+      playerSwordRotatedXY.bottomRight.y
     ),
-    new xy(otherSwordRotatedXY.bottomLeft.x, otherSwordRotatedXY.bottomLeft.y),
-    new xy(otherSwordRotatedXY.topLeft.x, otherSwordRotatedXY.topLeft.y),
+    new xy(
+      playerSwordRotatedXY.bottomLeft.x,
+      playerSwordRotatedXY.bottomLeft.y
+    ),
+    new xy(playerSwordRotatedXY.topLeft.x, playerSwordRotatedXY.topLeft.y),
   ];
-  let otherSwordEdges = [
+  let playerSwordEdges = [
     new xy(
-      otherSwordRotatedXY.bottomRight.x - otherSwordRotatedXY.topRight.x,
-      otherSwordRotatedXY.bottomRight.y - otherSwordRotatedXY.topRight.y
+      playerSwordRotatedXY.bottomRight.x - playerSwordRotatedXY.topRight.x,
+      playerSwordRotatedXY.bottomRight.y - playerSwordRotatedXY.topRight.y
     ),
     new xy(
-      otherSwordRotatedXY.bottomLeft.x - otherSwordRotatedXY.bottomRight.x,
-      otherSwordRotatedXY.bottomLeft.y - otherSwordRotatedXY.bottomRight.y
+      playerSwordRotatedXY.bottomLeft.x - playerSwordRotatedXY.bottomRight.x,
+      playerSwordRotatedXY.bottomLeft.y - playerSwordRotatedXY.bottomRight.y
     ),
     new xy(
-      otherSwordRotatedXY.topLeft.x - otherSwordRotatedXY.bottomLeft.x,
-      otherSwordRotatedXY.topLeft.y - otherSwordRotatedXY.bottomLeft.y
+      playerSwordRotatedXY.topLeft.x - playerSwordRotatedXY.bottomLeft.x,
+      playerSwordRotatedXY.topLeft.y - playerSwordRotatedXY.bottomLeft.y
     ),
     new xy(
-      otherSwordRotatedXY.topRight.x - otherSwordRotatedXY.topLeft.x,
-      otherSwordRotatedXY.topRight.y - otherSwordRotatedXY.topLeft.y
+      playerSwordRotatedXY.topRight.x - playerSwordRotatedXY.topLeft.x,
+      playerSwordRotatedXY.topRight.y - playerSwordRotatedXY.topLeft.y
     ),
   ];
   let thisRectPolygon = new polygon(thisSwordVertices, thisSwordEdges);
-  let otherRectPolygon = new polygon(otherSwordVertices, otherSwordEdges);
+  let otherRectPolygon = new polygon(playerSwordVertices, playerSwordEdges);
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
     thisSword.isColliding = true;
@@ -510,14 +512,14 @@ function detectRectangleCollision(index) {
     thisSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
-    if (thisSword.rotationAngle === 0 || otherSword.rotationAngle === 0) {
+    if (thisSword.rotationAngle === 0 || playerSword.rotationAngle === 0) {
       // TODO: Only this case??
       if (
         !(
-          thisSword.position.x > otherSword.position.x + otherSword.width ||
-          thisSword.position.x + thisSword.width < otherSword.position.x ||
-          thisSword.position.y > otherSword.position.y + otherSword.height ||
-          thisSword.position.y + thisSword.height < otherSword.position.y
+          thisSword.position.x > playerSword.position.x + playerSword.width ||
+          thisSword.position.x + thisSword.width < playerSword.position.x ||
+          thisSword.position.y > playerSword.position.y + playerSword.height ||
+          thisSword.position.y + thisSword.height < playerSword.position.y
         )
       ) {
         thisSword.color = red;
@@ -589,7 +591,7 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const es2 = new EnemySword();
 es2.position = { x: 100, y: 100 };
-const activeSwords = [ps, es];
+const activeSwords = [ps];
 // Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
 
 // // TODO: Later, add "pattern" as a parameter

@@ -28,9 +28,17 @@
         <h3>todos</h3>
         <ul>
           <li style="text-decoration: line-through">enemy sword +</li>
-          <li>enemy patterns and timing and disappearing +</li>
+          <li style="text-decoration: line-through">
+            enemy patterns and timing and disappearing +
+          </li>
+          <li>
+            still add some polish to above, but you got it pretty much :) +
+          </li>
           <li style="text-decoration: line-through">intersection +</li>
-          <li>scoring +</li>
+          <li style="text-decoration: line-through">scoring +</li>
+          <li>
+            still add some polish to above, but you got it pretty much :) +
+          </li>
           <li>level up +</li>
           <li style="text-decoration: line-through">
             more than one enemy sword +
@@ -39,8 +47,22 @@
             random angle for enemy sword +
           </li>
           <li>enemy sword within boundary of canvas (i.e. no oob) +</li>
-          <li>calculating angle difference between ps and es +</li>
+          <li style="text-decoration: line-through">
+            calculating angle difference between ps and es +
+          </li>
+          <li>game state +</li>
+          <li>visual stuff for how long you have until sliced +</li>
+          <li>
+            clean up detectRectangleCollision and make collision perfect RE:
+            width/height +
+          </li>
         </ul>
+        <p>
+          where you're at: gamestate is going to determine on each enemy type
+          (like, after x enemies are off screen [pushedSwords], delay for 100ms
+          and then increase gamestate). So, you can continue with creating enemy
+          types while also working in gamestate
+        </p>
       </div>
 
       <h2 id="scoreBoard"></h2>
