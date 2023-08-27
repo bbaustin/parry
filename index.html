@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>First Person Slicer</title>
+    <title>Parry</title>
     <link
       rel="stylesheet"
       href="styles.css"
@@ -17,31 +17,22 @@
     />
   </head>
   <body>
-    <h1>First Person Slicer</h1>
+    <h1>Parry</h1>
+    <h1>todo: finish game state. Then do slicing and/or collision visual</h1>
+    <section id="info">
+      <div id="enemy-info">
+        <h3 id="ne">Next Enemy...</h3>
+        <h2 id="next-enemy"></h2>
+        <p id="next-enemy-description"></p>
+        <button id="go"></button>
+      </div>
+    </section>
     <main>
       <canvas
         id="canvas"
         width="700"
         height="500"
       ></canvas>
-      <div>
-        <h3>todos</h3>
-        <ul>
-          <li style="text-decoration: line-through">enemy sword +</li>
-          <li>enemy patterns and timing and disappearing +</li>
-          <li style="text-decoration: line-through">intersection +</li>
-          <li>scoring +</li>
-          <li>level up +</li>
-          <li style="text-decoration: line-through">
-            more than one enemy sword +
-          </li>
-          <li style="text-decoration: line-through">
-            random angle for enemy sword +
-          </li>
-          <li>enemy sword within boundary of canvas (i.e. no oob) +</li>
-          <li>calculating angle difference between ps and es +</li>
-        </ul>
-      </div>
 
       <h2 id="scoreBoard"></h2>
     </main>
