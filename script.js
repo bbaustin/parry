@@ -177,7 +177,6 @@ class EnemySword extends Sword {
     if (this.timeSpentColliding >= 100) {
       const addedScore =
         90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
-      console.log(addedScore);
       score += addedScore;
       scoreBoard.textContent = score;
       // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
@@ -196,48 +195,8 @@ class EnemySword extends Sword {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                           Enemy Patterns                                         //
+//                                             Game State                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * 0- info (start screen or score from last)
- * 1- play (show canvas)
- */
-
-let gameState = 0;
-let enemyState = -1;
-let pushedSwords = 0;
-
-function changeToInfoState() {
-  if (enemyState === -1) {
-    ne.style.display = 'none';
-  }
-  handleInfoChange();
-}
-
-function handleInfoChange() {
-  cancelAnimationFrame(requestId);
-  gameState = 0;
-  enemyState += 1;
-  console.log(enemyState);
-  info.style.display = 'flex';
-  nextEnemy.textContent = ENEMIES[enemyState].name;
-  nextEnemyDescription.textContent = ENEMIES[enemyState].description;
-  go.textContent = ENEMIES[enemyState].button;
-}
-
-function changeToGameState() {
-  gameState = 1;
-  pushedSwords = 0;
-  // activeSwords = [ps];
-  console.log('gamestate');
-  info.style.display = 'none';
-  gameLoop();
-}
-
-go.onclick = () => {
-  changeToGameState();
-};
 
 //const enemyPatterns = ['peasant', 'barbarian', 'dual wielder', 'duelist', 'paladin', 'crusader'];
 /**
@@ -248,10 +207,62 @@ go.onclick = () => {
  * 4 - paladin/high-int barb (straight line attacks but random angles)
  * 5 - crusader (far away attacks)
  */
+let enemyState = -1;
+let gameState = false;
+let pushedSwords = 0;
 
-/////////////
-// Enemies //
-////////////
+// let stalling = false;
+// let delayBy = 0;
+// function killTime() {
+//   if (stalling) {
+//     const currentTime = tick;
+//     const stopTime = tick + delayBy;
+//     console.log(currentTime);
+//     console.log(stopTime);
+//     if (tick < stopTime) {
+//       console.log('not yet');
+//     }
+//     stalling = false;
+//   }
+// }
+
+function changeToInfoState() {
+  if (enemyState === -1) {
+    ne.style.display = 'none';
+  }
+  handleInfoChange();
+}
+
+function stopGameLoop() {
+  gameState = false;
+  cancelAnimationFrame(requestId);
+}
+
+function handleInfoChange() {
+  stopGameLoop();
+  enemyState += 1;
+  info.style.display = 'flex';
+  nextEnemy.textContent = ENEMIES[enemyState].name;
+  nextEnemyDescription.textContent = ENEMIES[enemyState].description;
+  go.textContent = ENEMIES[enemyState].button;
+}
+
+function changeToGameState() {
+  pushedSwords = 0;
+  activeSwords.length = 0;
+  activeSwords.push(ps);
+  info.style.display = 'none';
+  gameState = true;
+  requestId = requestAnimationFrame(gameLoop);
+}
+
+go.onclick = () => {
+  changeToGameState();
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           Enemy Patterns                                         //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function peasant() {
   if (pushedSwords < 5) {
@@ -259,6 +270,8 @@ function peasant() {
   } else if (pushedSwords < 10) {
     pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
+    // stalling = true;
+    // delayBy = 1000;
     changeToInfoState();
   }
 }
@@ -274,6 +287,8 @@ function barbarian() {
     pushSword(msDelay, barbarianX, barbarianX, 350, 350, 90);
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
+  } else {
+    changeToInfoState();
   }
 }
 
@@ -295,6 +310,8 @@ function paladin() {
       475,
       getRandomInt(-100, 100)
     );
+  } else {
+    changeToInfoState();
   }
 }
 
@@ -313,7 +330,6 @@ function duelist() {
     } else if (pushedSwords < 16) {
       duelistX = 500;
     }
-
     pushSword(
       msDelay,
       pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
@@ -322,6 +338,8 @@ function duelist() {
       duelistY[pushedSwords % 4], // Adjusted the array index
       pushedSwords % 2 === 0 ? -45 : 45
     );
+  } else {
+    changeToInfoState();
   }
 }
 
@@ -378,6 +396,17 @@ const ENEMIES = [
     fx: paladin,
   },
 ];
+
+const GOODBYE = {
+  name: 'Thanks for playing!',
+  description: `Final score: ${score}`,
+  button: 'Go back to JS13K Games',
+  fx: goodbye,
+};
+
+function goodbye() {
+  window.location.replace('https://js13kgames.com/'); //TODO: Does this work? lol
+}
 
 /////////////////
 // Enemy Utils //
@@ -715,6 +744,7 @@ activeSwords.forEach((sword, index) => {
 let requestId;
 
 function gameLoop() {
+  if (!gameState) return;
   tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
   ps.checkSwordRotation();
@@ -730,6 +760,7 @@ function gameLoop() {
   // paladin();
   // duelist();
   // dualWielder();
+  // killTime();
   requestId = requestAnimationFrame(gameLoop);
 }
 
