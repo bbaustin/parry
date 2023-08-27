@@ -30,6 +30,13 @@ h1 {
   border: 1px solid saddlebrown;
 }
 
+#info {
+  background: blanchedalmond;
+  border: 1px solid saddlebrown;
+  display: none;
+  position: fixed;
+  width: 700px;
+}
 /* .sword {
   height: 100px;
   width: 5px;

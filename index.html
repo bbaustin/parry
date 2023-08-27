@@ -17,7 +17,27 @@
     />
   </head>
   <body>
-    <h1>First Person Slicer</h1>
+    <h1>Parry</h1>
+    <section id="info">
+      <h1>Welcome</h1>
+      <div>
+        <h2>Controls</h2>
+        <ul>
+          <li>Q - rotate sword left</li>
+          <li>E - rotate sword right</li>
+          <li>Mouse - move sword</li>
+          </ul>
+          <h2>Instructions</h2>
+          <p>Position your sword over an enemy's sword for 1 second to parry. Be sure to do so before the enemy completes its attack. Aim for opposite angles (i.e. make a 'cross' or 'x' with your sword and the enemy sword) for the highest score.</p>
+        </ul>
+      </div>
+      <div id="enemy-info">
+        <h3>Next Enemy...</h3>
+        <h2 id="next-enemy"></h2>
+        <p id="next-enemy-info"></p>
+      </div>
+      <button id="go"></button>
+    </section>
     <main>
       <canvas
         id="canvas"

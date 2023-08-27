@@ -216,49 +216,18 @@ let pushedSwords = 0;
 // Enemies //
 ////////////
 function peasant() {
+  console.log(pushedSwords);
   if (pushedSwords < 5) {
-    pushPeasantSword(400);
-  } else if (pushedSwords < 10) pushPeasantSword(200);
-  else {
-    pushedSwords = 0;
+    pushSword(300, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
+  } else if (pushedSwords < 10) {
+    pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
+  } else {
+    // pushedSwords = 0;
     increaseGameState();
     enemyState++;
   }
 }
 
-function barbarian() {
-  if (pushedSwords < 4) {
-    pushBarbarianOrPaladinSword(50, 90, 100);
-  } else if (pushedSwords < 8) {
-    pushBarbarianOrPaladinSword(50, 0, 225);
-  } else if (pushedSwords < 12) {
-    pushBarbarianOrPaladinSword(50, 90, 350);
-  } else if (pushedSwords < 16) {
-    pushBarbarianOrPaladinSword(50, 0, 475);
-  }
-}
-
-function paladin() {
-  if (pushedSwords < 4) {
-    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 100);
-  } else if (pushedSwords < 8) {
-    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 225);
-  } else if (pushedSwords < 12) {
-    pushBarbarianOrPaladinSword(50, getRandomInt(0, 359), 350);
-  } else if (pushedSwords < 16) {
-    pushBarbarianOrPaladinSword(50, getRandomInt(-90, 90), 475);
-  }
-}
-
-function duelist() {}
-
-function dualWielder() {}
-
-function crusader() {}
-
-/////////////////
-// Enemy Utils //
-////////////////
 function pushPeasantSword(msDelay) {
   if (tick % msDelay === 0) {
     console.log(tick, msDelay);
@@ -272,16 +241,80 @@ function pushPeasantSword(msDelay) {
   }
 }
 
-function pushBarbarianOrPaladinSword(msDelay, angle, y) {
+function barbarian() {
+  const msDelay = 50;
+  const barbarianX = (pushedSwords % 4) * 150 + 100;
+  if (pushedSwords < 4) {
+    pushSword(msDelay, barbarianX, barbarianX, 100, 100, 90);
+  } else if (pushedSwords < 8) {
+    pushSword(msDelay, barbarianX, barbarianX, 225, 225, 0);
+  } else if (pushedSwords < 12) {
+    pushSword(msDelay, barbarianX, barbarianX, 350, 350, 90);
+  } else if (pushedSwords < 16) {
+    pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
+  }
+}
+
+function paladin() {
+  const msDelay = 50;
+  const barbarianX = (pushedSwords % 4) * 150 + 100;
+  if (pushedSwords < 4) {
+    pushSword(msDelay, barbarianX, barbarianX, 100, 100, getRandomInt(0, 359));
+  } else if (pushedSwords < 8) {
+    pushSword(msDelay, barbarianX, barbarianX, 225, 225, getRandomInt(0, 359));
+  } else if (pushedSwords < 12) {
+    pushSword(msDelay, barbarianX, barbarianX, 350, 350, getRandomInt(0, 359));
+  } else if (pushedSwords < 16) {
+    pushSword(
+      msDelay,
+      barbarianX,
+      barbarianX,
+      475,
+      475,
+      getRandomInt(-100, 100)
+    );
+  }
+}
+
+function duelist() {
+  const msDelay = 50;
+  const duelistY = [100, 225, 350, 475];
+  let duelistX;
+
+  if (pushedSwords < 16) {
+    if (pushedSwords < 4) {
+      duelistX = 150;
+    } else if (pushedSwords < 8) {
+      duelistX = 600; // getRandomInt(100, 600);
+    } else if (pushedSwords < 12) {
+      duelistX = 300;
+    } else if (pushedSwords < 16) {
+      duelistX = 500;
+    }
+
+    pushSword(
+      msDelay,
+      pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
+      pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
+      duelistY[pushedSwords % 4], // Adjusted the array index
+      duelistY[pushedSwords % 4], // Adjusted the array index
+      pushedSwords % 2 === 0 ? -45 : 45
+    );
+  }
+}
+
+function dualWielder() {}
+
+function crusader() {}
+
+/////////////////
+// Enemy Utils //
+////////////////
+
+function pushSword(msDelay, x1, x2, y1, y2, angle) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
-    // TODO: Figure out why getting from a function works, but assigning directly doesn't lol...
-    const location = getRandomConstrainedLocation(
-      (pushedSwords % 4) * 150 + 100,
-      (pushedSwords % 4) * 150 + 100,
-      y,
-      y
-    );
+    const location = getRandomConstrainedLocation(x1, x2, y1, y2);
     newEs.position = location;
     newEs.rotationAngle = angle;
     activeSwords.push(newEs);
@@ -512,7 +545,7 @@ function detectRectangleCollision(index) {
     thisSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
-    if (thisSword.rotationAngle === 0 || playerSword.rotationAngle === 0) {
+    if (thisSword.rotationAngle === 0 && playerSword.rotationAngle === 0) {
       // TODO: Only this case??
       if (
         !(
@@ -583,8 +616,19 @@ function getRandomLocation() {
 function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   const randomX = Math.random() * (xMax - xMin + 1) + xMin;
   const randomY = Math.random() * (yMax - yMin + 1) + yMin;
+  const ok = { x: randomX, y: randomY };
+  console.log(ok);
   return { x: randomX, y: randomY };
 }
+
+// Below causes collision bug. No idea why lol
+// function getRandomConstrainedLocationWhy(x, y) {
+//   const constrainedX = typeof x === 'number' ? x : getRandomInt(x[0], x[1]);
+//   const constrainedY = typeof y === 'number' ? y : getRandomInt(y[0], y[1]);
+//   const ok = { x: constrainedX, y: constrainedY };
+//   console.log(ok);
+//   return { x: constrainedX, y: constrainedY };
+// }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
@@ -624,8 +668,9 @@ function gameLoop() {
     sword.computeTimeToDeletion();
   });
   // peasant();
-  barbarian();
-  //  paladin();
+  // barbarian();
+  // paladin();
+  duelist();
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
