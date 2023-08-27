@@ -33,13 +33,14 @@ h1 {
 }
 
 #info {
-  padding: 50px;
-  text-align: center;
   background: blanchedalmond;
   border: 1px solid saddlebrown;
   display: flex;
+  justify-content: center;
+  max-width: 700px;
+  padding: 50px;
   position: fixed;
-  width: 700px;
+  text-align: center;
 }
 
 #scoreBoard {

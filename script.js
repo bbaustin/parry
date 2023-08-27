@@ -234,8 +234,8 @@ function changeToInfoState() {
 }
 
 function stopGameLoop() {
-  gameState = false;
   cancelAnimationFrame(requestId);
+  gameState = false;
 }
 
 function handleInfoChange() {
@@ -257,7 +257,7 @@ function changeToGameState() {
 }
 
 go.onclick = () => {
-  changeToGameState();
+  if (gameState < ENEMIES.length - 1) changeToGameState();
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +270,6 @@ function peasant() {
   } else if (pushedSwords < 10) {
     pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
-    // stalling = true;
-    // delayBy = 1000;
     changeToInfoState();
   }
 }
@@ -395,14 +393,14 @@ const ENEMIES = [
     button: "I'm paladin to it",
     fx: paladin,
   },
+  {
+    //TODO: Detemrine if you want this
+    name: 'Thanks for playing!',
+    description: `Final score: ${score}`,
+    button: 'Go back to JS13K Games',
+    fx: goodbye,
+  },
 ];
-
-const GOODBYE = {
-  name: 'Thanks for playing!',
-  description: `Final score: ${score}`,
-  button: 'Go back to JS13K Games',
-  fx: goodbye,
-};
 
 function goodbye() {
   window.location.replace('https://js13kgames.com/'); //TODO: Does this work? lol
@@ -717,8 +715,6 @@ function getRandomLocation() {
 function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   const randomX = Math.random() * (xMax - xMin + 1) + xMin;
   const randomY = Math.random() * (yMax - yMin + 1) + yMin;
-  const ok = { x: randomX, y: randomY };
-  console.log(ok);
   return { x: randomX, y: randomY };
 }
 
