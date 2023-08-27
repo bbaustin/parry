@@ -14,6 +14,11 @@ const gry = '#6a6a6a';
 let tick = 0;
 let score = 0;
 const scoreBoard = document.getElementById('scoreBoard');
+const info = document.getElementById('info');
+const nextEnemy = document.getElementById('next-enemy');
+const nextEnemyDescription = document.getElementById('next-enemy-description');
+const go = document.getElementById('go');
+const ne = document.getElementById('ne');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -150,7 +155,12 @@ document.addEventListener('keyup', (event) => {
 // NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
-  constructor(id = tick, timeSpentColliding = 0, parried = false) {
+  constructor(
+    id = tick,
+    timeSpentColliding = 0,
+    parried = false,
+    sliced = false
+  ) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
@@ -160,6 +170,7 @@ class EnemySword extends Sword {
     this.id = id;
     this.timeSpentColliding = timeSpentColliding;
     this.parried = parried;
+    this.sliced = sliced;
   }
   timeSpentColliding = this.timeSpentColliding;
   computeTimeToDeletion() {
@@ -192,11 +203,41 @@ class EnemySword extends Sword {
  * 0- info (start screen or score from last)
  * 1- play (show canvas)
  */
+
 let gameState = 0;
-function increaseGameState() {
-  if (gameState === 0) return (gameState = 1);
-  return (gameState = 0);
+let enemyState = -1;
+let pushedSwords = 0;
+
+function changeToInfoState() {
+  if (enemyState === -1) {
+    ne.style.display = 'none';
+  }
+  handleInfoChange();
 }
+
+function handleInfoChange() {
+  cancelAnimationFrame(requestId);
+  gameState = 0;
+  enemyState += 1;
+  console.log(enemyState);
+  info.style.display = 'flex';
+  nextEnemy.textContent = ENEMIES[enemyState].name;
+  nextEnemyDescription.textContent = ENEMIES[enemyState].description;
+  go.textContent = ENEMIES[enemyState].button;
+}
+
+function changeToGameState() {
+  gameState = 1;
+  pushedSwords = 0;
+  // activeSwords = [ps];
+  console.log('gamestate');
+  info.style.display = 'none';
+  gameLoop();
+}
+
+go.onclick = () => {
+  changeToGameState();
+};
 
 //const enemyPatterns = ['peasant', 'barbarian', 'dual wielder', 'duelist', 'paladin', 'crusader'];
 /**
@@ -207,37 +248,18 @@ function increaseGameState() {
  * 4 - paladin/high-int barb (straight line attacks but random angles)
  * 5 - crusader (far away attacks)
  */
-let enemyState = 0;
-
-// TODO: Later, add "pattern" as a parameter
-let pushedSwords = 0;
 
 /////////////
 // Enemies //
 ////////////
+
 function peasant() {
-  console.log(pushedSwords);
   if (pushedSwords < 5) {
     pushSword(300, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
   } else if (pushedSwords < 10) {
     pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
-    // pushedSwords = 0;
-    increaseGameState();
-    enemyState++;
-  }
-}
-
-function pushPeasantSword(msDelay) {
-  if (tick % msDelay === 0) {
-    console.log(tick, msDelay);
-    const newEs = new EnemySword();
-    const randomLocation = getRandomLocation();
-    newEs.position = randomLocation;
-    newEs.rotationAngle = Math.random() > 0.5 ? 90 : 0; // getRandomInt(-90, 90)
-    activeSwords.push(newEs);
-    pushedSwords++;
-    console.log(activeSwords);
+    changeToInfoState();
   }
 }
 
@@ -303,9 +325,59 @@ function duelist() {
   }
 }
 
-function dualWielder() {}
+// TODO: NOT WORKING YET :D
+function dualWielder() {
+  if (pushedSwords < 16) {
+    let angle, x1, x2, y1, y2;
+    // let angle = getRandomInt(-90, 90);
+    // let x1 = getRandomInt(100, 600);
+    // let x2 = x1 + angle;
+    // let y1 = getRandomInt(200, 400);
+    // let y2 = y1 - 90 - angle;
+    if (pushedSwords % 2 === 0) {
+      angle = getRandomInt(-90, 90);
+      x1 = getRandomInt(100, 600);
+      x2 = x2 = x1 + angle / 4;
+      y1 = getRandomInt(200, 400);
+      y2 = y1 + Math.abs(90 - angle / 4);
+    }
+    console.log(angle);
+    pushSword(100, x1, x1, y1, y1, angle);
+    pushSword(100, x2, x2, y2, y2, angle);
+  }
+}
 
 function crusader() {}
+
+const ENEMIES = [
+  {
+    name: 'Welcome!',
+    description:
+      'Move your sword with the mouse. Rotate with Q or E. Block enemy attacks by intersecting enemy sword. Try to get opposite angles (i.e. make a cross or x shape) for maximum score',
+    button: 'Start',
+    fx: peasant,
+  },
+  {
+    name: 'Barbarian',
+    description:
+      'Quick, but dumb. Try to rack up a high score with their predictable attacks.',
+    button: "I'm barbarian to it",
+    fx: barbarian,
+  },
+  {
+    name: 'Duelist',
+    description:
+      'A skilled combatant. Try to keep up with their precise attacks. En garde!',
+    button: "Let's duel it",
+    fx: duelist,
+  },
+  {
+    name: 'Paladin',
+    description: 'High-INT barbarian',
+    button: "I'm paladin to it",
+    fx: paladin,
+  },
+];
 
 /////////////////
 // Enemy Utils //
@@ -633,44 +705,32 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-const es2 = new EnemySword();
-es2.position = { x: 100, y: 100 };
-const activeSwords = [ps];
-// Where you're at: can you get another sword to render? You have to change your detection code a bit, which is causing a specific angle to not detect :D
 
-// // TODO: Later, add "pattern" as a parameter
-// function addEnemySwords() {
-//   if (tick % 300 === 0) {
-//     const newEs = new EnemySword();
-//     const randomLocation = getRandomLocation();
-//     newEs.position = randomLocation;
-//     newEs.rotationAngle = Math.random() > 0.5 ? 90 : 0;
-//     activeSwords.push(newEs);
-//     console.log(newEs);
-//     console.log(activeSwords);
-//   }
-// }
+const activeSwords = [ps];
 
 activeSwords.forEach((sword, index) => {
   detectRectangleCollision(index);
 });
 
+let requestId;
+
 function gameLoop() {
   tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
-  // es.draw(es.position.x, es.position.y);
   ps.checkSwordRotation();
   activeSwords.forEach((sword, index) => {
-    if (index === 0) return;
-    if (sword.parried) return;
+    if (index === 0 || sword.parried || sword.sliced) return;
     detectRectangleCollision(index);
     sword.drawRotation();
     sword.computeTimeToDeletion();
   });
+  ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
   // paladin();
-  duelist();
-  requestAnimationFrame(gameLoop);
+  // duelist();
+  // dualWielder();
+  requestId = requestAnimationFrame(gameLoop);
 }
-gameLoop();
+
+changeToInfoState();

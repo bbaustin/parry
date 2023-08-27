@@ -19,24 +19,12 @@
   <body>
     <h1>Parry</h1>
     <section id="info">
-      <h1>Welcome</h1>
-      <div>
-        <h2>Controls</h2>
-        <ul>
-          <li>Q - rotate sword left</li>
-          <li>E - rotate sword right</li>
-          <li>Mouse - move sword</li>
-          </ul>
-          <h2>Instructions</h2>
-          <p>Position your sword over an enemy's sword for 1 second to parry. Be sure to do so before the enemy completes its attack. Aim for opposite angles (i.e. make a 'cross' or 'x' with your sword and the enemy sword) for the highest score.</p>
-        </ul>
-      </div>
       <div id="enemy-info">
-        <h3>Next Enemy...</h3>
+        <h3 id="ne">Next Enemy...</h3>
         <h2 id="next-enemy"></h2>
-        <p id="next-enemy-info"></p>
+        <p id="next-enemy-description"></p>
+        <button id="go"></button>
       </div>
-      <button id="go"></button>
     </section>
     <main>
       <canvas
@@ -44,46 +32,6 @@
         width="700"
         height="500"
       ></canvas>
-      <div>
-        <h3>todos</h3>
-        <ul>
-          <li style="text-decoration: line-through">enemy sword +</li>
-          <li style="text-decoration: line-through">
-            enemy patterns and timing and disappearing +
-          </li>
-          <li>
-            still add some polish to above, but you got it pretty much :) +
-          </li>
-          <li style="text-decoration: line-through">intersection +</li>
-          <li style="text-decoration: line-through">scoring +</li>
-          <li>
-            still add some polish to above, but you got it pretty much :) +
-          </li>
-          <li>level up +</li>
-          <li style="text-decoration: line-through">
-            more than one enemy sword +
-          </li>
-          <li style="text-decoration: line-through">
-            random angle for enemy sword +
-          </li>
-          <li>enemy sword within boundary of canvas (i.e. no oob) +</li>
-          <li style="text-decoration: line-through">
-            calculating angle difference between ps and es +
-          </li>
-          <li>game state +</li>
-          <li>visual stuff for how long you have until sliced +</li>
-          <li>
-            clean up detectRectangleCollision and make collision perfect RE:
-            width/height +
-          </li>
-        </ul>
-        <p>
-          where you're at: gamestate is going to determine on each enemy type
-          (like, after x enemies are off screen [pushedSwords], delay for 100ms
-          and then increase gamestate). So, you can continue with creating enemy
-          types while also working in gamestate
-        </p>
-      </div>
 
       <h2 id="scoreBoard"></h2>
     </main>
