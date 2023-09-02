@@ -13,12 +13,23 @@ const gry = '#6a6a6a';
 // Refers to frame of gameLoop. Used for some timing stuff
 let tick = 0;
 let score = 0;
+let roundScore = 0;
 const scoreBoard = document.getElementById('scoreBoard');
 const info = document.getElementById('info');
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
 const ne = document.getElementById('ne');
+const timeUntilParried = 33;
+const timeUntilSliced = 75;
+const grades = [
+  'Parryble... (terrible)',
+  'Not quite up to par(ry)',
+  'Parry good',
+  'Imparryssive',
+  'Extraordinparry!',
+  'Legendparry!',
+];
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -34,6 +45,9 @@ class Sword {
     height = 100,
     rotationAngle = 0,
     isColliding = false,
+    timeSpentColliding = 0,
+    timeSpentOnScreen = 0,
+    id = tick,
   }) {
     this.position = position;
     this.color = color;
@@ -43,13 +57,27 @@ class Sword {
     this.height = height;
     this.rotationAngle = rotationAngle;
     this.isColliding = isColliding;
+    this.timeSpentColliding = timeSpentColliding;
+    this.timeSpentOnScreen = timeSpentOnScreen;
+    this.id = id;
   }
 
   draw() {
     context.beginPath();
-    !this.isColliding
-      ? (context.fillStyle = this.color)
-      : (context.fillStyle = this.makeGradient());
+    //or === 0? try. could also have a "isPlayer" attribute
+    if (this.id < 50) {
+      // only for PlayerSword
+      this.isColliding
+        ? (context.fillStyle = this.makeGradient(
+            (this.timeSpentColliding * (100 / timeUntilParried)) / 100
+          ))
+        : (context.fillStyle = this.color);
+    } else {
+      // only for enemy sword
+      context.fillStyle = this.makeGradient(
+        (this.timeSpentOnScreen * (100 / timeUntilSliced)) / 100
+      );
+    }
     context.fillRect(
       this.position.x - this.width / 2,
       this.position.y - this.height,
@@ -70,19 +98,19 @@ class Sword {
     context.restore();
   }
 
-  makeGradient() {
+  makeGradient(progressValue) {
     const first = this.position.x - this.width / 2;
     const second = this.position.y;
     const third = this.position.x + this.width / 2;
     const fourth = this.position.y - this.height;
     const colorStopBeg = 0;
-    const colorStopMid = 0.5;
+    let colorStopMid = progressValue > 1.0 ? 1.0 : progressValue;
     const colorStopEnd = 1.0;
     const gradient = context.createLinearGradient(first, second, third, fourth);
-    gradient.addColorStop(colorStopBeg, 'purple');
-    gradient.addColorStop(colorStopMid, 'purple');
-    gradient.addColorStop(colorStopMid, 'hotpink');
-    gradient.addColorStop(colorStopEnd, 'hotpink');
+    gradient.addColorStop(colorStopBeg, this.color);
+    gradient.addColorStop(colorStopMid, this.color);
+    gradient.addColorStop(colorStopMid, this.collidingColor);
+    gradient.addColorStop(colorStopEnd, this.collidingColor);
     return gradient;
   }
 }
@@ -113,6 +141,12 @@ class PlayerSword extends Sword {
       this.rotationAngle += angleInDegrees;
     }
     this.drawRotation();
+  }
+
+  determineTimeSpentColliding() {
+    if (this.isColliding) {
+      this.timeSpentColliding++;
+    }
   }
 }
 
@@ -149,46 +183,40 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Let the color change
 // Timing
-// Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
-// + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
 
-// NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
-  constructor(
-    id = tick,
-    timeSpentColliding = 0,
-    parried = false,
-    sliced = false
-  ) {
+  constructor(parried = false, sliced = false) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
       defaultColor: red,
       collidingColor: gry,
     });
-    this.id = id;
-    this.timeSpentColliding = timeSpentColliding;
     this.parried = parried;
     this.sliced = sliced;
   }
   timeSpentColliding = this.timeSpentColliding;
-  computeTimeToDeletion() {
-    if (this.timeSpentColliding >= 100) {
+
+  handleSlice() {
+    if (this.timeSpentOnScreen >= timeUntilSliced) {
+      // animation
+      this.sliced = true;
+      changeScore(90, false);
+    }
+  }
+
+  handleParry() {
+    if (this.timeSpentColliding >= timeUntilParried) {
       const addedScore =
         90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
-      score += addedScore;
-      scoreBoard.textContent = score;
-      // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
-      // const indexToDelete = activeSwords.findIndex((sword) => {
-      //   return sword.id === this.id;
-      // });
-      // activeSwords.splice(indexToDelete, 1);
+      changeScore(addedScore, true);
       this.parried = true;
     }
     if (this.isColliding) {
       this.timeSpentColliding++;
     } else {
+      this.timeSpentOnScreen++;
       if (this.timeSpentColliding > 0) this.timeSpentColliding--;
     }
   }
@@ -210,21 +238,6 @@ class EnemySword extends Sword {
 let enemyState = -1;
 let gameState = false;
 let pushedSwords = 0;
-
-// let stalling = false;
-// let delayBy = 0;
-// function killTime() {
-//   if (stalling) {
-//     const currentTime = tick;
-//     const stopTime = tick + delayBy;
-//     console.log(currentTime);
-//     console.log(stopTime);
-//     if (tick < stopTime) {
-//       console.log('not yet');
-//     }
-//     stalling = false;
-//   }
-// }
 
 function changeToInfoState() {
   if (enemyState === -1) {
@@ -639,9 +652,12 @@ function detectRectangleCollision(index) {
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
     thisSword.isColliding = true;
-    thisSword.color = thisSword.collidingColor;
+    playerSword.isColliding = true;
+    playerSword.timeSpentColliding = thisSword.timeSpentColliding;
+    // thisSword.color = thisSword.collidingColor;
   } else {
     thisSword.isColliding = false;
+    playerSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
     //Below covers the case of two swords with rotationAngle 0
     if (thisSword.rotationAngle === 0 && playerSword.rotationAngle === 0) {
@@ -718,6 +734,24 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   return { x: randomX, y: randomY };
 }
 
+/**
+ * Takes a number and boolean (true +, false -).
+ * Updates score, roundScore, and HTML accordingly.
+ *
+ * @param {number} newPoints
+ * @param {boolean} isPositive
+ */
+function changeScore(newPoints, isPositive) {
+  if (isPositive) {
+    score += newPoints;
+    roundScore += newPoints;
+  } else {
+    score -= newPoints;
+    roundScore -= newPoints;
+  }
+  scoreBoard.textContent = score;
+}
+
 // Below causes collision bug. No idea why lol
 // function getRandomConstrainedLocationWhy(x, y) {
 //   const constrainedX = typeof x === 'number' ? x : getRandomInt(x[0], x[1]);
@@ -744,11 +778,13 @@ function gameLoop() {
   tick++;
   context.clearRect(0, 0, canvas.width, canvas.height);
   ps.checkSwordRotation();
+  ps.determineTimeSpentColliding();
   activeSwords.forEach((sword, index) => {
     if (index === 0 || sword.parried || sword.sliced) return;
     detectRectangleCollision(index);
     sword.drawRotation();
-    sword.computeTimeToDeletion();
+    sword.handleParry();
+    sword.handleSlice();
   });
   ENEMIES[enemyState].fx();
   // peasant();
