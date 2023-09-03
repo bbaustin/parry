@@ -9,16 +9,29 @@ let mouseY = 0;
 const blu = '#6a6aff';
 const grn = '#bad500';
 const red = '#ff6a6a';
+const rrr = '#ff0000';
 const gry = '#6a6a6a';
 // Refers to frame of gameLoop. Used for some timing stuff
 let tick = 0;
 let score = 0;
+let roundScore = 0;
 const scoreBoard = document.getElementById('scoreBoard');
 const info = document.getElementById('info');
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
 const ne = document.getElementById('ne');
+const timeUntilParried = 33;
+const timeUntilSliced = 75;
+const grades = [
+  'Parryble... (terrible)',
+  'Not quite up to par(ry)',
+  'Parry good',
+  'Imparryssive',
+  'Extraordinparry!',
+  'Legendparry!',
+];
+let activelyCollidingSwords = new Set();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -34,6 +47,10 @@ class Sword {
     height = 100,
     rotationAngle = 0,
     isColliding = false,
+    timeSpentColliding = 0,
+    timeSpentOnScreen = 0,
+    id = tick,
+    sliced = false,
   }) {
     this.position = position;
     this.color = color;
@@ -43,13 +60,37 @@ class Sword {
     this.height = height;
     this.rotationAngle = rotationAngle;
     this.isColliding = isColliding;
+    this.timeSpentColliding = timeSpentColliding;
+    this.timeSpentOnScreen = timeSpentOnScreen;
+    this.id = id;
+    this.sliced = sliced;
   }
 
   draw() {
     context.beginPath();
-    !this.isColliding
-      ? (context.fillStyle = this.color)
-      : (context.fillStyle = this.makeGradient());
+    //or === 0? try. could also have a "isPlayer" attribute
+    if (this.id < 50) {
+      // only for PlayerSword
+      if (this.isColliding && activelyCollidingSwords.size > 0) {
+        context.fillStyle = 'yellow'; //TODO: Fix
+        // context.fillStyle = this.makeGradient(
+        //   (this.timeSpentColliding * (100 / timeUntilParried)) / 100
+        // );
+      } else {
+        context.fillStyle = this.color;
+      }
+    } else {
+      // only for enemy sword
+      if (this.slicing) {
+        // TODO: Maek this look more like an attack
+        this.color = rrr;
+      }
+      if (!this.sliced) {
+        context.fillStyle = this.makeGradient(
+          (this.timeSpentOnScreen * (100 / timeUntilSliced)) / 100
+        );
+      }
+    }
     context.fillRect(
       this.position.x - this.width / 2,
       this.position.y - this.height,
@@ -70,19 +111,19 @@ class Sword {
     context.restore();
   }
 
-  makeGradient() {
+  makeGradient(progressValue) {
     const first = this.position.x - this.width / 2;
     const second = this.position.y;
     const third = this.position.x + this.width / 2;
     const fourth = this.position.y - this.height;
     const colorStopBeg = 0;
-    const colorStopMid = 0.5;
+    let colorStopMid = progressValue > 1.0 ? 1.0 : progressValue;
     const colorStopEnd = 1.0;
     const gradient = context.createLinearGradient(first, second, third, fourth);
-    gradient.addColorStop(colorStopBeg, 'purple');
-    gradient.addColorStop(colorStopMid, 'purple');
-    gradient.addColorStop(colorStopMid, 'hotpink');
-    gradient.addColorStop(colorStopEnd, 'hotpink');
+    gradient.addColorStop(colorStopBeg, this.color);
+    gradient.addColorStop(colorStopMid, this.color);
+    gradient.addColorStop(colorStopMid, this.collidingColor);
+    gradient.addColorStop(colorStopEnd, this.collidingColor);
     return gradient;
   }
 }
@@ -114,12 +155,18 @@ class PlayerSword extends Sword {
     }
     this.drawRotation();
   }
+
+  determineTimeSpentColliding() {
+    if (this.isColliding) {
+      this.timeSpentColliding++;
+    }
+  }
 }
 
-const ps = new PlayerSword({});
+const ps = new PlayerSword();
 
 /**
- * Used by event listeners directly below. Maybe should be in PlayerSword class, but I think I want it outside? Idk
+ * Used by event listeners directly below.
  */
 let keyStateForPlayerSwordRotation = {
   q: false,
@@ -149,46 +196,46 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Let the color change
 // Timing
-// Related to all, probably need to make an enemySword class, since we'll have multiple on screen at once.
-// + Break down top left, top right, bottom left, bottom right corners etc. for collision. And make easy to access
 
-// NOTE: Right now, this doesn't really have to be a new class. It can just be a Sword. But you'll probably add stuff to it.
 const enemySwordLocation = getRandomLocation();
 class EnemySword extends Sword {
-  constructor(
-    id = tick,
-    timeSpentColliding = 0,
-    parried = false,
-    sliced = false
-  ) {
+  constructor(parried = false, slicing = false) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
       defaultColor: red,
       collidingColor: gry,
     });
-    this.id = id;
-    this.timeSpentColliding = timeSpentColliding;
     this.parried = parried;
-    this.sliced = sliced;
+    this.slicing = slicing;
   }
   timeSpentColliding = this.timeSpentColliding;
-  computeTimeToDeletion() {
-    if (this.timeSpentColliding >= 100) {
+
+  handleSlice() {
+    if (this.timeSpentOnScreen >= timeUntilSliced) {
+      this.slicing = true;
+      if (tick % 50 === 0) {
+        changeScore(90, false);
+        this.slicing = false;
+        this.sliced = true;
+        activelyCollidingSwords.delete(this.id);
+      }
+    }
+  }
+
+  handleParry() {
+    if (this.timeSpentColliding >= timeUntilParried) {
       const addedScore =
         90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
-      score += addedScore;
-      scoreBoard.textContent = score;
-      // NOTE: Your current implementation works better than below, because there's no flickering.. But in case you need this solution (removing from activeSwords, I'll leave it for the time being)
-      // const indexToDelete = activeSwords.findIndex((sword) => {
-      //   return sword.id === this.id;
-      // });
-      // activeSwords.splice(indexToDelete, 1);
+      changeScore(addedScore, true);
       this.parried = true;
+      activelyCollidingSwords.delete(this.id);
     }
     if (this.isColliding) {
       this.timeSpentColliding++;
+      activelyCollidingSwords.add(this.id);
     } else {
+      this.timeSpentOnScreen++;
       if (this.timeSpentColliding > 0) this.timeSpentColliding--;
     }
   }
@@ -210,21 +257,6 @@ class EnemySword extends Sword {
 let enemyState = -1;
 let gameState = false;
 let pushedSwords = 0;
-
-// let stalling = false;
-// let delayBy = 0;
-// function killTime() {
-//   if (stalling) {
-//     const currentTime = tick;
-//     const stopTime = tick + delayBy;
-//     console.log(currentTime);
-//     console.log(stopTime);
-//     if (tick < stopTime) {
-//       console.log('not yet');
-//     }
-//     stalling = false;
-//   }
-// }
 
 function changeToInfoState() {
   if (enemyState === -1) {
@@ -286,7 +318,9 @@ function barbarian() {
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
   } else {
-    changeToInfoState();
+    if (tick % 200 === 0) {
+      changeToInfoState();
+    }
   }
 }
 
@@ -309,7 +343,9 @@ function paladin() {
       getRandomInt(-100, 100)
     );
   } else {
-    changeToInfoState();
+    if (tick % 200 === 0) {
+      changeToInfoState();
+    }
   }
 }
 
@@ -337,7 +373,9 @@ function duelist() {
       pushedSwords % 2 === 0 ? -45 : 45
     );
   } else {
-    changeToInfoState();
+    if (tick % 200 === 0) {
+      changeToInfoState();
+    }
   }
 }
 
@@ -412,6 +450,8 @@ function goodbye() {
 
 function pushSword(msDelay, x1, x2, y1, y2, angle) {
   if (tick % msDelay === 0) {
+    // Can just kill time by providing null
+    if (!x1) return;
     const newEs = new EnemySword();
     const location = getRandomConstrainedLocation(x1, x2, y1, y2);
     newEs.position = location;
@@ -507,33 +547,33 @@ function polygon(vertices, edges) {
 
 // This is applying the Separate Axis Theorem
 function isColliding(polygonA, polygonB) {
-  var perpendicularLine = null;
+  let perpendicularLine = null;
   // https://en.wikipedia.org/wiki/Dot_product
-  var dot = 0;
-  var perpendicularStack = [];
-  var amin = null;
-  var amax = null;
-  var bmin = null;
-  var bmax = null;
+  let dot = 0;
+  let perpendicularStack = [];
+  let amin = null;
+  let amax = null;
+  let bmin = null;
+  let bmax = null;
   //Get all perpendicular vectors on each edge for polygonA
-  for (var i = 0; i < polygonA.edge.length; i++) {
+  for (let i = 0; i < polygonA.edge.length; i++) {
     perpendicularLine = new xy(-polygonA.edge[i].y, polygonA.edge[i].x);
     perpendicularStack.push(perpendicularLine);
   }
   //Get all perpendicular vectors on each edge for polygonB
-  for (var i = 0; i < polygonB.edge.length; i++) {
+  for (let i = 0; i < polygonB.edge.length; i++) {
     perpendicularLine = new xy(-polygonB.edge[i].y, polygonB.edge[i].x);
     perpendicularStack.push(perpendicularLine);
   }
   //Loop through each perpendicular vector for both polygons
-  for (var i = 0; i < perpendicularStack.length; i++) {
+  for (let i = 0; i < perpendicularStack.length; i++) {
     //These dot products will return different values each time
     amin = null;
     amax = null;
     bmin = null;
     bmax = null;
     // Work out all of the dot products for all of the vertices in PolygonA against the perpendicular vector that is currently being looped through
-    for (var j = 0; j < polygonA.vertex.length; j++) {
+    for (let j = 0; j < polygonA.vertex.length; j++) {
       dot =
         polygonA.vertex[j].x * perpendicularStack[i].x +
         polygonA.vertex[j].y * perpendicularStack[i].y;
@@ -546,7 +586,7 @@ function isColliding(polygonA, polygonB) {
       }
     }
     // Work out all of the dot products for all of the vertices in PolygonB against the perpendicular vector that is currently being looped through
-    for (var j = 0; j < polygonB.vertex.length; j++) {
+    for (let j = 0; j < polygonB.vertex.length; j++) {
       dot =
         polygonB.vertex[j].x * perpendicularStack[i].x +
         polygonB.vertex[j].y * perpendicularStack[i].y;
@@ -575,6 +615,7 @@ function isColliding(polygonA, polygonB) {
 function detectRectangleCollision(index) {
   if (index === 0) return;
   const thisSword = activeSwords[index];
+  if (thisSword.slicing) return;
   const playerSword = activeSwords[0];
   //Get rotated coordinates for both rectangles
   let thisSwordRotatedXY = getRotatedCoordinates(thisSword);
@@ -639,10 +680,17 @@ function detectRectangleCollision(index) {
 
   if (isColliding(thisRectPolygon, otherRectPolygon)) {
     thisSword.isColliding = true;
-    thisSword.color = thisSword.collidingColor;
+    playerSword.isColliding = true;
+    playerSword.timeSpentColliding = thisSword.timeSpentColliding;
+    activelyCollidingSwords.add(this.id);
+
+    // thisSword.color = thisSword.collidingColor;
   } else {
     thisSword.isColliding = false;
+    playerSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
+    activelyCollidingSwords.delete(this.id);
+
     //Below covers the case of two swords with rotationAngle 0
     if (thisSword.rotationAngle === 0 && playerSword.rotationAngle === 0) {
       // TODO: Only this case??
@@ -718,12 +766,29 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   return { x: randomX, y: randomY };
 }
 
+/**
+ * Takes a number and boolean (true +, false -).
+ * Updates score, roundScore, and HTML accordingly.
+ *
+ * @param {number} newPoints
+ * @param {boolean} isPositive
+ */
+function changeScore(newPoints, isPositive) {
+  if (isPositive) {
+    score += newPoints;
+    roundScore += newPoints;
+  } else {
+    score -= newPoints;
+    roundScore -= newPoints;
+  }
+  scoreBoard.textContent = score;
+}
+
 // Below causes collision bug. No idea why lol
 // function getRandomConstrainedLocationWhy(x, y) {
 //   const constrainedX = typeof x === 'number' ? x : getRandomInt(x[0], x[1]);
 //   const constrainedY = typeof y === 'number' ? y : getRandomInt(y[0], y[1]);
 //   const ok = { x: constrainedX, y: constrainedY };
-//   console.log(ok);
 //   return { x: constrainedX, y: constrainedY };
 // }
 
@@ -742,17 +807,20 @@ let requestId;
 function gameLoop() {
   if (!gameState) return;
   tick++;
+  console.log(activelyCollidingSwords);
   context.clearRect(0, 0, canvas.width, canvas.height);
   ps.checkSwordRotation();
+  ps.determineTimeSpentColliding();
   activeSwords.forEach((sword, index) => {
     if (index === 0 || sword.parried || sword.sliced) return;
     detectRectangleCollision(index);
     sword.drawRotation();
-    sword.computeTimeToDeletion();
+    sword.handleParry();
+    sword.handleSlice();
   });
-  ENEMIES[enemyState].fx();
+  // ENEMIES[enemyState].fx();
   // peasant();
-  // barbarian();
+  barbarian();
   // paladin();
   // duelist();
   // dualWielder();
