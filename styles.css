@@ -1,10 +1,11 @@
 body {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: Georgia, serif;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   background: blanchedalmond;
+  line-height: 1.5;
 }
 
 main {
@@ -20,6 +21,12 @@ li {
 h1 {
   text-align: center;
   margin: 0;
+  font-family: fantasy;
+}
+button {
+  background: blanchedalmond;
+  padding: 10px 20px;
+  font-family: Georgia, serif;
 }
 
 #arena {
@@ -47,16 +54,7 @@ h1 {
   width: 300px;
   height: 300px;
   border: 1px solid saddlebrown;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-/* .sword {
-  height: 100px;
-  width: 5px;
-  background: blue;
-  position: absolute;
-  transition: transform 0.1s ease;
-  transform-origin: bottom center;
-}
-
-.sword.enemy {
-  background: orange;
-} */
