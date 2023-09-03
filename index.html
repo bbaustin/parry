@@ -19,9 +19,30 @@
   <body>
     <h1>Parry</h1>
     <section id="info">
+      <div id="round-info">
+        <h3 id="pr">Last round, you were...</h3>
+        <h1 id="previous-round"></h1>
+        <ul>
+          <li>
+            <span id="your-score"></span> /
+            <span id="total-possible-score"></span> points (<span
+              id="score-percent"
+            ></span
+            >%)
+          </li>
+          <li>
+            <span id="your-parries"></span> strikes parried /
+            <span id="total-possible-parries"> total strikes</span> (<span
+              id="parries-percent"
+            ></span
+            >%)
+          </li>
+        </ul>
+        <button id="go"></button>
+      </div>
       <div id="enemy-info">
         <h3 id="ne">Next Enemy...</h3>
-        <h2 id="next-enemy"></h2>
+        <h1 id="next-enemy"></h1>
         <p id="next-enemy-description"></p>
         <button id="go"></button>
       </div>
@@ -32,7 +53,6 @@
         width="700"
         height="500"
       ></canvas>
-
       <h2 id="scoreBoard"></h2>
     </main>
     <script src="script.js"></script>
