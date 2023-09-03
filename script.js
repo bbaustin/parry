@@ -91,12 +91,21 @@ class Sword {
         );
       }
     }
-    context.fillRect(
-      this.position.x - this.width / 2,
-      this.position.y - this.height,
-      this.width,
-      this.height
-    );
+    const x = this.position.x;
+    const y = this.position.y;
+    context.moveTo(x - 5, y);
+    context.lineTo(x - 5, y - this.height);
+    context.lineTo(x, y - this.height - 10);
+    context.lineTo(x + 5, y - this.height);
+    context.lineTo(x + 5, y);
+    context.lineTo(x - 5, y);
+    context.fill();
+    // context.fillRect(
+    //   this.position.x - this.width / 2,
+    //   this.position.y - this.height,
+    //   this.width,
+    //   this.height
+    // );
   }
 
   drawRotation() {
@@ -115,7 +124,7 @@ class Sword {
     const first = this.position.x - this.width / 2;
     const second = this.position.y;
     const third = this.position.x + this.width / 2;
-    const fourth = this.position.y - this.height;
+    const fourth = this.position.y - this.height - 10;
     const colorStopBeg = 0;
     let colorStopMid = progressValue > 1.0 ? 1.0 : progressValue;
     const colorStopEnd = 1.0;
