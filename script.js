@@ -504,6 +504,30 @@ function pushSword(msDelay, x1, x2, y1, y2, angle) {
     newEs.position = location;
     newEs.rotationAngle = angle;
     activeSwords.push(newEs);
+    zzfx(
+      ...[
+        ,
+        ,
+        90,
+        0.02,
+        0.06,
+        0.07,
+        1,
+        0.13,
+        ,
+        ,
+        ,
+        ,
+        ,
+        0.2,
+        ,
+        0.3,
+        ,
+        0.91,
+        0.08,
+        0.15,
+      ]
+    ); // Hit 110
     pushedSwords++;
   }
 }
@@ -941,9 +965,9 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
-  // ENEMIES[enemyState].fx();
+  ENEMIES[enemyState].fx();
   // peasant();
-  barbarian();
+  // barbarian();
   // paladin();
   // duelist();
   // dualWielder();
