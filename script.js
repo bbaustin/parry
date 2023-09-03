@@ -31,7 +31,7 @@ const grades = [
   'Extraordinparry!',
   'Legendparry!',
 ];
-let activelyCollidingSwords = new Set();
+let activeCollisionHappening = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -71,11 +71,11 @@ class Sword {
     //or === 0? try. could also have a "isPlayer" attribute
     if (this.id < 50) {
       // only for PlayerSword
-      if (this.isColliding && activelyCollidingSwords.size > 0) {
-        context.fillStyle = 'yellow'; //TODO: Fix
-        // context.fillStyle = this.makeGradient(
-        //   (this.timeSpentColliding * (100 / timeUntilParried)) / 100
-        // );
+      if (activeCollisionHappening) {
+        //        context.fillStyle = 'yellow'; //TODO: Fix
+        context.fillStyle = this.makeGradient(
+          (this.timeSpentColliding * (100 / timeUntilParried)) / 100
+        );
       } else {
         context.fillStyle = this.color;
       }
@@ -100,12 +100,6 @@ class Sword {
     context.lineTo(x + 5, y);
     context.lineTo(x - 5, y);
     context.fill();
-    // context.fillRect(
-    //   this.position.x - this.width / 2,
-    //   this.position.y - this.height,
-    //   this.width,
-    //   this.height
-    // );
   }
 
   drawRotation() {
@@ -218,7 +212,6 @@ class EnemySword extends Sword {
     this.parried = parried;
     this.slicing = slicing;
   }
-  timeSpentColliding = this.timeSpentColliding;
 
   handleSlice() {
     if (this.timeSpentOnScreen >= timeUntilSliced) {
@@ -227,7 +220,6 @@ class EnemySword extends Sword {
         changeScore(90, false);
         this.slicing = false;
         this.sliced = true;
-        activelyCollidingSwords.delete(this.id);
       }
     }
   }
@@ -238,11 +230,11 @@ class EnemySword extends Sword {
         90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
       changeScore(addedScore, true);
       this.parried = true;
-      activelyCollidingSwords.delete(this.id);
+      activeCollisionHappening = false;
     }
     if (this.isColliding) {
       this.timeSpentColliding++;
-      activelyCollidingSwords.add(this.id);
+      activeCollisionHappening = true;
     } else {
       this.timeSpentOnScreen++;
       if (this.timeSpentColliding > 0) this.timeSpentColliding--;
@@ -459,8 +451,6 @@ function goodbye() {
 
 function pushSword(msDelay, x1, x2, y1, y2, angle) {
   if (tick % msDelay === 0) {
-    // Can just kill time by providing null
-    if (!x1) return;
     const newEs = new EnemySword();
     const location = getRandomConstrainedLocation(x1, x2, y1, y2);
     newEs.position = location;
@@ -508,7 +498,6 @@ function getRotatedCoordinates(sword) {
     sword.position.y,
     sword.rotationAngle
   );
-  // pstl.textContent = Math.floor(topLeft.x) + ', ' + Math.floor(topLeft.y);
   let topRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -516,7 +505,6 @@ function getRotatedCoordinates(sword) {
     sword.position.y,
     sword.rotationAngle
   );
-  // pstr.textContent = Math.floor(topRight.x) + ', ' + Math.floor(topRight.y);
   let bottomLeft = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -524,7 +512,6 @@ function getRotatedCoordinates(sword) {
     sword.position.y + sword.height,
     sword.rotationAngle
   );
-  // psbl.textContent = Math.floor(bottomLeft.x) + ', ' + Math.floor(bottomLeft.y);
   let bottomRight = rotatedCoordinatesHelper(
     centerX,
     centerY,
@@ -532,8 +519,6 @@ function getRotatedCoordinates(sword) {
     sword.position.y + sword.height,
     sword.rotationAngle
   );
-  // psbr.textContent =
-  //   Math.floor(bottomRight.x) + ', ' + Math.floor(bottomRight.y);
   return {
     topLeft: topLeft,
     topRight: topRight,
@@ -691,18 +676,15 @@ function detectRectangleCollision(index) {
     thisSword.isColliding = true;
     playerSword.isColliding = true;
     playerSword.timeSpentColliding = thisSword.timeSpentColliding;
-    activelyCollidingSwords.add(this.id);
 
     // thisSword.color = thisSword.collidingColor;
   } else {
     thisSword.isColliding = false;
     playerSword.isColliding = false;
     thisSword.color = thisSword.defaultColor;
-    activelyCollidingSwords.delete(this.id);
 
     //Below covers the case of two swords with rotationAngle 0
     if (thisSword.rotationAngle === 0 && playerSword.rotationAngle === 0) {
-      // TODO: Only this case??
       if (
         !(
           thisSword.position.x > playerSword.position.x + playerSword.width ||
@@ -793,14 +775,6 @@ function changeScore(newPoints, isPositive) {
   scoreBoard.textContent = score;
 }
 
-// Below causes collision bug. No idea why lol
-// function getRandomConstrainedLocationWhy(x, y) {
-//   const constrainedX = typeof x === 'number' ? x : getRandomInt(x[0], x[1]);
-//   const constrainedY = typeof y === 'number' ? y : getRandomInt(y[0], y[1]);
-//   const ok = { x: constrainedX, y: constrainedY };
-//   return { x: constrainedX, y: constrainedY };
-// }
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -816,7 +790,6 @@ let requestId;
 function gameLoop() {
   if (!gameState) return;
   tick++;
-  console.log(activelyCollidingSwords);
   context.clearRect(0, 0, canvas.width, canvas.height);
   ps.checkSwordRotation();
   ps.determineTimeSpentColliding();
@@ -833,7 +806,6 @@ function gameLoop() {
   // paladin();
   // duelist();
   // dualWielder();
-  // killTime();
   requestId = requestAnimationFrame(gameLoop);
 }
 
