@@ -38,14 +38,6 @@ const parriesPercent = document.getElementById('parries-percent');
 //
 const timeUntilParried = 33;
 const timeUntilSliced = 75;
-const grades = [
-  'Parryble... (terrible)',
-  'Not quite up to par(ry)',
-  'Parry good',
-  'Imparryssive',
-  'Extraordinparry!',
-  'Legendparry!',
-];
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -264,10 +256,10 @@ class EnemySword extends Sword {
 
   handleParry() {
     if (this.timeSpentColliding >= timeUntilParried) {
-      // TODO: This is wrong lol
       const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
       changeScore(addedScore, true);
       this.parried = true;
+      parriedCount++;
       activeCollisionHappening = false;
       zzfx(
         ...[
@@ -338,15 +330,43 @@ function stopGameLoop() {
 
 function handleInfoChange() {
   stopGameLoop();
+  // first update score stuff
+  if (enemyState > -1) {
+    let enoa = ENEMIES[enemyState].numberOfAttacks;
+    previousRoundResults.textContent = determineRoundRating(enoa);
+    scorePercent.textContent = Math.round((roundScore / (enoa * 100)) * 100);
+    yourParries.textContent = parriedCount;
+    totalPossibleParries.textContent = enoa;
+    parriesPercent.textContent = Math.round((parriedCount / enoa) * 100);
+    yourScore.textContent = roundScore;
+    totalPossibleScore.textContent = 100 * enoa;
+  }
+  //then update enemy stuff
   enemyState += 1;
-  info.style.display = 'flex';
   nextEnemy.textContent = ENEMIES[enemyState].name;
   nextEnemyDescription.textContent = ENEMIES[enemyState].description;
   go.textContent = ENEMIES[enemyState].button;
+  info.style.display = 'flex';
+}
+
+function determineRoundRating(enoa) {
+  const grades = [
+    'Parryble... (terrible).',
+    'Not quite up to par(ry).',
+    'Somewhat imparryssive...',
+    'Parretty good',
+    'Extraordinparry!',
+    'Legendparry!',
+  ];
+  const max = enoa * 100;
+  for (let i = 1; i <= 6; i++) {
+    if (roundScore <= max * (i / 6)) return grades[i - 1];
+  }
 }
 
 function changeToGameState() {
   parriedCount = 0;
+  roundScore = 0;
   pushedSwords = 0;
   activeSwords.length = 0;
   activeSwords.push(ps);
@@ -473,30 +493,28 @@ function transitionToNextStage() {
 const ENEMIES = [
   {
     name: 'Peasant',
-    description: 'Practically untrained with a sword. ',
+    description: '"Slow but unpredictable."',
     button: 'Start',
     fx: peasant,
     numberOfAttacks: 10,
   },
   {
     name: 'Barbarian',
-    description:
-      'Quick, but dumb. Try to rack up a high score with their predictable attacks.',
+    description: '"Quick but predictable."',
     button: "I'm barbarian to it",
     fx: barbarian,
     numberOfAttacks: 16,
   },
   {
     name: 'Duelist',
-    description:
-      'A skilled combatant. Try to keep up with their precise attacks. En garde!',
+    description: '"Skilled and precise."',
     button: "Let's duel it",
     fx: duelist,
     numberOfAttacks: 16,
   },
   {
     name: 'Paladin',
-    description: 'High-INT barbarian',
+    description: '"Barbarian but smart."',
     button: "I'm paladin to it",
     fx: paladin,
     numberOfAttacks: 16,
