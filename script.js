@@ -15,12 +15,25 @@ const gry = '#6a6a6a';
 let tick = 0;
 let score = 0;
 let roundScore = 0;
+// HTML stuff
 const scoreBoard = document.getElementById('scoreBoard');
 const info = document.getElementById('info');
+// Start info
+const startInfo = document.getElementById('start-info');
+// Enemy Info
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
-const ne = document.getElementById('ne');
+// Results Info
+const roundInfo = document.getElementById('round-info');
+const previousRoundResults = document.getElementById('previous-round-results');
+const yourScore = document.getElementById('your-score');
+const totalPossibleScore = document.getElementById('total-possible-score');
+const scorePercent = document.getElementById('score-percent');
+const yourParries = document.getElementById('your-parries');
+const totalPossibleParries = document.getElementById('total-possible-parries');
+const parriesPercent = document.getElementById('parries-percent');
+//
 const timeUntilParried = 33;
 const timeUntilSliced = 75;
 const grades = [
@@ -250,8 +263,8 @@ class EnemySword extends Sword {
 
   handleParry() {
     if (this.timeSpentColliding >= timeUntilParried) {
-      const addedScore =
-        90 - Math.abs(90 - Math.abs(this.rotationAngle - ps.rotationAngle));
+      // TODO: This is wrong lol
+      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
       changeScore(addedScore, true);
       this.parried = true;
       activeCollisionHappening = false;
@@ -309,7 +322,10 @@ let pushedSwords = 0;
 
 function changeToInfoState() {
   if (enemyState === -1) {
-    ne.style.display = 'none';
+    roundInfo.style.display = 'none';
+  } else {
+    roundInfo.style.display = 'block';
+    startInfo.style.display = 'none';
   }
   handleInfoChange();
 }
@@ -454,9 +470,8 @@ function crusader() {}
 
 const ENEMIES = [
   {
-    name: 'Welcome!',
-    description:
-      'Move your sword with the mouse. Rotate with Q or E. Block enemy attacks by intersecting enemy sword. Try to get opposite angles (i.e. make a cross or x shape) for maximum score',
+    name: 'Peasant',
+    description: 'Practically untrained with a sword. ',
     button: 'Start',
     fx: peasant,
   },
@@ -827,6 +842,18 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   const randomX = Math.random() * (xMax - xMin + 1) + xMin;
   const randomY = Math.random() * (yMax - yMin + 1) + yMin;
   return { x: randomX, y: randomY };
+}
+
+function calculatePoints(angle1, angle2) {
+  // Calculate the absolute angle difference modulo 180 degrees
+  const angleDifference = Math.abs(
+    ((((angle1 - angle2 + 180) % 360) + 360) % 360) - 180
+  );
+
+  const points = Math.round(100 - (Math.abs(90 - angleDifference) / 90) * 100);
+
+  // Ensure points are within the range of 0 to 100
+  return Math.max(0, Math.min(100, points));
 }
 
 /**
