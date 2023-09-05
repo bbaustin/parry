@@ -14,8 +14,12 @@ main {
   gap: 50px;
 }
 
+ul {
+  text-align: left;
+}
+
 li {
-  list-style-type: none;
+  margin-bottom: 12px;
 }
 
 h1 {
@@ -23,6 +27,11 @@ h1 {
   margin: 0;
   font-family: fantasy;
 }
+
+h3 {
+  margin: 0;
+}
+
 button {
   background: blanchedalmond;
   padding: 10px 20px;
@@ -45,7 +54,6 @@ button {
   display: flex;
   justify-content: center;
   max-width: 700px;
-  padding: 50px;
   position: fixed;
   text-align: center;
 }
@@ -57,4 +65,18 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#enemy-info {
+  border-left: 1px solid saddlebrown;
+  /* display: flex;
+  flex-direction: column;
+  justify-content: space-between; */
+}
+
+#start-info,
+#enemy-info,
+#round-info {
+  padding: 30px;
+  width: 50%;
 }
