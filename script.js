@@ -15,6 +15,8 @@ const gry = '#6a6a6a';
 let tick = 0;
 let score = 0;
 let roundScore = 0;
+let activeCollisionHappening = false;
+let parriedCount = 0;
 // HTML stuff
 const scoreBoard = document.getElementById('scoreBoard');
 const info = document.getElementById('info');
@@ -44,7 +46,6 @@ const grades = [
   'Extraordinparry!',
   'Legendparry!',
 ];
-let activeCollisionHappening = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -212,7 +213,7 @@ document.addEventListener('keyup', (event) => {
 // Let the color change
 // Timing
 
-const enemySwordLocation = getRandomLocation();
+const enemySwordLocation = getRandomConstrainedLocation(100, 600, 100, 400);
 class EnemySword extends Sword {
   constructor(parried = false, slicing = false) {
     super({
@@ -345,6 +346,7 @@ function handleInfoChange() {
 }
 
 function changeToGameState() {
+  parriedCount = 0;
   pushedSwords = 0;
   activeSwords.length = 0;
   activeSwords.push(ps);
@@ -363,11 +365,11 @@ go.onclick = () => {
 
 function peasant() {
   if (pushedSwords < 5) {
-    pushSword(300, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
+    pushSword(250, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
   } else if (pushedSwords < 10) {
-    pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
+    pushSword(100, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
-    changeToInfoState();
+    transitionToNextStage();
   }
 }
 
@@ -383,9 +385,7 @@ function barbarian() {
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage();
   }
 }
 
@@ -408,9 +408,7 @@ function paladin() {
       getRandomInt(-100, 100)
     );
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage();
   }
 }
 
@@ -438,9 +436,7 @@ function duelist() {
       pushedSwords % 2 === 0 ? -45 : 45
     );
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage();
   }
 }
 
@@ -468,12 +464,19 @@ function dualWielder() {
 
 function crusader() {}
 
+function transitionToNextStage() {
+  if (tick % 200 === 0) {
+    changeToInfoState();
+  }
+}
+
 const ENEMIES = [
   {
     name: 'Peasant',
     description: 'Practically untrained with a sword. ',
     button: 'Start',
     fx: peasant,
+    numberOfAttacks: 10,
   },
   {
     name: 'Barbarian',
@@ -481,6 +484,7 @@ const ENEMIES = [
       'Quick, but dumb. Try to rack up a high score with their predictable attacks.',
     button: "I'm barbarian to it",
     fx: barbarian,
+    numberOfAttacks: 16,
   },
   {
     name: 'Duelist',
@@ -488,12 +492,14 @@ const ENEMIES = [
       'A skilled combatant. Try to keep up with their precise attacks. En garde!',
     button: "Let's duel it",
     fx: duelist,
+    numberOfAttacks: 16,
   },
   {
     name: 'Paladin',
     description: 'High-INT barbarian',
     button: "I'm paladin to it",
     fx: paladin,
+    numberOfAttacks: 16,
   },
   {
     //TODO: Detemrine if you want this
@@ -501,6 +507,7 @@ const ENEMIES = [
     description: `Final score: ${score}`,
     button: 'Go back to JS13K Games',
     fx: goodbye,
+    numberOfAttacks: 0,
   },
 ];
 
@@ -830,12 +837,6 @@ canvas.addEventListener('mousemove', setMousePositionForPlayerSword);
  */
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function getRandomLocation() {
-  const randomX = 100 + Math.random() * (canvas.width - 100);
-  const randomY = 100 + Math.random() * (canvas.height - 100);
-  return { x: randomX, y: randomY };
 }
 
 function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {

@@ -69,9 +69,6 @@ button {
 
 #enemy-info {
   border-left: 1px solid saddlebrown;
-  /* display: flex;
-  flex-direction: column;
-  justify-content: space-between; */
 }
 
 #start-info,
