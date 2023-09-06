@@ -61,18 +61,21 @@ button {
   border: 1px solid saddlebrown;
   display: flex;
   justify-content: center;
-  max-width: 700px;
+  width: 700px;
+  height: 500px;
+  top: 56px;
   position: fixed;
   text-align: center;
 }
 
 #scoreBoard {
   width: 300px;
-  height: 300px;
+  height: 100px;
   border: 1px solid saddlebrown;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 30px;
 }
 
 #enemy-info {
