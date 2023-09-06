@@ -42,6 +42,10 @@ button {
   font-family: Georgia, serif;
 }
 
+#go-sound {
+  margin-bottom: 15px;
+}
+
 #arena {
   width: 700px;
   height: 500px;

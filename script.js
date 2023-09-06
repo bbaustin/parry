@@ -26,6 +26,7 @@ const startInfo = document.getElementById('start-info');
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
+const goSound = document.getElementById('go-sound');
 // Results Info
 const roundInfo = document.getElementById('round-info');
 const previousRoundResults = document.getElementById('previous-round-results');
@@ -38,6 +39,7 @@ const parriesPercent = document.getElementById('parries-percent');
 //
 const timeUntilParried = 33;
 const timeUntilSliced = 75;
+let hasSound = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -226,11 +228,49 @@ class EnemySword extends Sword {
         changeScore(90, false);
         this.slicing = false;
         this.sliced = true;
+        if (hasSound) {
+          zzfx(
+            ...[
+              ,
+              ,
+              1000,
+              0.02,
+              0.1,
+              0.12,
+              1,
+              1.78,
+              -9.5,
+              0.2,
+              ,
+              ,
+              ,
+              0.1,
+              ,
+              ,
+              ,
+              0.47,
+              0.02,
+              0.06,
+            ]
+          ); // Pickup 101
+        }
+      }
+    }
+  }
+
+  handleParry() {
+    if (this.timeSpentColliding >= timeUntilParried) {
+      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
+      changeScore(addedScore, true);
+      this.parried = true;
+      parriedCount++;
+      activeCollisionHappening = false;
+      if (hasSound) {
         zzfx(
           ...[
             ,
             ,
-            1000,
+            1300,
             0.02,
             0.1,
             0.12,
@@ -251,40 +291,6 @@ class EnemySword extends Sword {
           ]
         ); // Pickup 101
       }
-    }
-  }
-
-  handleParry() {
-    if (this.timeSpentColliding >= timeUntilParried) {
-      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
-      changeScore(addedScore, true);
-      this.parried = true;
-      parriedCount++;
-      activeCollisionHappening = false;
-      zzfx(
-        ...[
-          ,
-          ,
-          1300,
-          0.02,
-          0.1,
-          0.12,
-          1,
-          1.78,
-          -9.5,
-          0.2,
-          ,
-          ,
-          ,
-          0.1,
-          ,
-          ,
-          ,
-          0.47,
-          0.02,
-          0.06,
-        ]
-      ); // Pickup 101
     }
     if (this.isColliding) {
       this.timeSpentColliding++;
@@ -319,6 +325,7 @@ function changeToInfoState() {
   } else {
     roundInfo.style.display = 'block';
     startInfo.style.display = 'none';
+    goSound.style.display = 'none';
   }
   handleInfoChange();
 }
@@ -354,13 +361,14 @@ function determineRoundRating(enoa) {
     'Parryble... (terrible).',
     'Not quite up to par(ry).',
     'Somewhat imparryssive...',
-    'Parretty good',
+    'Parretty good...',
+    'Parry good!',
     'Extraordinparry!',
     'Legendparry!',
   ];
   const max = enoa * 100;
-  for (let i = 1; i <= 6; i++) {
-    if (roundScore <= max * (i / 6)) return grades[i - 1];
+  for (let i = 1; i <= grades.length; i++) {
+    if (roundScore <= max * (i / grades.length)) return grades[i - 1];
   }
 }
 
@@ -377,6 +385,12 @@ function changeToGameState() {
 
 go.onclick = () => {
   if (gameState < ENEMIES.length - 1) changeToGameState();
+};
+
+goSound.onclick = () => {
+  changeToGameState();
+  zzfxX = new AudioContext();
+  hasSound = true;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,7 +508,7 @@ const ENEMIES = [
   {
     name: 'Peasant',
     description: '"Slow but unpredictable."',
-    button: 'Start',
+    button: 'Start (without sound)',
     fx: peasant,
     numberOfAttacks: 10,
   },
@@ -544,30 +558,32 @@ function pushSword(msDelay, x1, x2, y1, y2, angle) {
     newEs.position = location;
     newEs.rotationAngle = angle;
     activeSwords.push(newEs);
-    zzfx(
-      ...[
-        ,
-        ,
-        90,
-        0.02,
-        0.06,
-        0.07,
-        1,
-        0.13,
-        ,
-        ,
-        ,
-        ,
-        ,
-        0.2,
-        ,
-        0.3,
-        ,
-        0.91,
-        0.08,
-        0.15,
-      ]
-    ); // Hit 110
+    if (hasSound) {
+      zzfx(
+        ...[
+          ,
+          ,
+          90,
+          0.02,
+          0.06,
+          0.07,
+          1,
+          0.13,
+          ,
+          ,
+          ,
+          ,
+          ,
+          0.2,
+          ,
+          0.3,
+          ,
+          0.91,
+          0.08,
+          0.15,
+        ]
+      ); // Hit 110
+    }
     pushedSwords++;
   }
 }
@@ -984,7 +1000,6 @@ zzfx = // play sound
     b.start();
     return b;
   };
-zzfxX = new AudioContext();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
