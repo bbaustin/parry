@@ -76,15 +76,31 @@ button {
   justify-content: center;
   align-items: center;
   margin-top: 30px;
+  font-size: 24px;
+  flex-direction: column;
 }
 
+#scoreBoard span {
+  font-size: 12px;
+}
+
+#scoreBoard span,
+p {
+  margin: 0;
+}
+
+#last-info,
 #enemy-info {
   border-left: 1px solid saddlebrown;
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
 }
 
 #start-info,
 #enemy-info,
-#round-info {
+#round-info,
+#last-info {
   padding: 30px;
   width: 50%;
 }

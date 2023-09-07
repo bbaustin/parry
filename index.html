@@ -56,8 +56,8 @@
       </div>
       <div id="enemy-info">
         <h3>Next Enemy...</h3>
-        <h1 id="next-enemy"></h1>
         <div>
+          <h1 id="next-enemy"></h1>
           <p id="next-enemy-description"></p>
         </div>
         <div>
@@ -69,8 +69,6 @@
       <div id="last-info">
         <h1>Thanks for playing!</h1>
         <a href="https://js13kgames.com/">Go back to js13kGames</a>
-        <button id="reload-button">Play again</button>
-        <p id="reload">(just reload the page)</p>
       </div>
     </section>
     <main>
@@ -80,7 +78,10 @@
         height="500"
       ></canvas>
     </main>
-    <div id="scoreBoard"></div>
+    <div id="scoreBoard">
+      <span>Score:</span>
+      <p id="score">0</p>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>

@@ -18,11 +18,12 @@ let roundScore = 0;
 let activeCollisionHappening = false;
 let parriedCount = 0;
 // HTML stuff
-const scoreBoard = document.getElementById('scoreBoard');
+const totalScore = document.getElementById('score');
 const info = document.getElementById('info');
 // Start info
 const startInfo = document.getElementById('start-info');
 // Enemy Info
+const enemyInfo = document.getElementById('enemy-info');
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
@@ -350,10 +351,16 @@ function handleInfoChange() {
   }
   //then update enemy stuff
   enemyState += 1;
-  nextEnemy.textContent = ENEMIES[enemyState].name;
-  nextEnemyDescription.textContent = ENEMIES[enemyState].description;
-  go.textContent = ENEMIES[enemyState].button;
   info.style.display = 'flex';
+  if (enemyState === ENEMIES.length) {
+    lastInfo.style.display = 'flex';
+    enemyInfo.style.display = 'none';
+  } else {
+    enemyInfo.style.display = 'flex';
+    nextEnemy.textContent = ENEMIES[enemyState].name;
+    nextEnemyDescription.textContent = ENEMIES[enemyState].description;
+    go.textContent = ENEMIES[enemyState].button;
+  }
 }
 
 function determineRoundRating(enoa) {
@@ -399,11 +406,11 @@ goSound.onclick = () => {
 
 function peasant() {
   if (pushedSwords < 5) {
-    pushSword(250, 100, 600, 100, 400, chooseRandom(0, 90));
+    pushSword(250, 100, 600, 100, 400, chooseRandomly(0, 90));
   } else if (pushedSwords < 10) {
     pushSword(100, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
-    transitionToNextStage();
+    transitionToNextStage(375);
   }
 }
 
@@ -419,7 +426,7 @@ function barbarian() {
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
   } else {
-    transitionToNextStage();
+    transitionToNextStage(600);
   }
 }
 
@@ -498,7 +505,7 @@ function archer() {
     },
   ];
   let combo, randomIndex;
-  if (pushedSwords < 16) {
+  if (pushedSwords < 10) {
     if (tick % 75 === 0) {
       randomIndex = getRandomInt(0, 3);
       if (randomIndex === lastComboIndex) {
@@ -512,7 +519,7 @@ function archer() {
       lastComboIndex = randomIndex;
       pushSword(1, combo.x, combo.x, combo.y, combo.y, combo.a);
     }
-  } else if (pushedSwords < 32) {
+  } else if (pushedSwords < 26) {
     if (tick % 150 === 0) {
       let r1 = getRandomInt(0, 3);
       let r2 = getRandomInt(0, 3);
@@ -535,11 +542,12 @@ function archer() {
         combos[r2].y,
         combos[r2].y,
         combos[r2].a,
-        125
+        125,
+        false
       );
     }
   } else {
-    transitionToNextStage();
+    transitionToNextStage(600);
   }
 }
 
@@ -567,8 +575,8 @@ function dualWielder() {
 
 function crusader() {}
 
-function transitionToNextStage() {
-  if (tick % 200 === 0) {
+function transitionToNextStage(delay = 200) {
+  if (tick % delay === 0) {
     changeToInfoState();
   }
 }
@@ -593,7 +601,7 @@ const ENEMIES = [
     description: '"Long-ranged sniper"',
     button: 'Ready, set, bow',
     fx: archer,
-    numberOfAttacks: 16,
+    numberOfAttacks: 26,
   },
   {
     name: 'Duelist',
@@ -609,14 +617,6 @@ const ENEMIES = [
     fx: paladin,
     numberOfAttacks: 16,
   },
-  {
-    //TODO: Detemrine if you want this
-    name: 'Thanks for playing!',
-    description: `Final score: ${score}`,
-    button: 'Go back to JS13K Games',
-    fx: goodbye,
-    numberOfAttacks: 0,
-  },
 ];
 
 function goodbye() {
@@ -627,7 +627,16 @@ function goodbye() {
 // Enemy Utils //
 ////////////////
 
-function pushSword(msDelay, x1, x2, y1, y2, angle, sliceTime = 75) {
+function pushSword(
+  msDelay,
+  x1,
+  x2,
+  y1,
+  y2,
+  angle,
+  sliceTime = 75,
+  shouldPlaySound = true
+) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
     const location = getRandomConstrainedLocation(x1, x2, y1, y2);
@@ -635,7 +644,7 @@ function pushSword(msDelay, x1, x2, y1, y2, angle, sliceTime = 75) {
     newEs.rotationAngle = angle;
     newEs.timeUntilSliced = sliceTime;
     activeSwords.push(newEs);
-    if (hasSound) {
+    if (hasSound && shouldPlaySound) {
       zzfx(
         ...[
           ,
@@ -987,7 +996,7 @@ function changeScore(newPoints, isPositive) {
     score -= newPoints;
     roundScore -= newPoints;
   }
-  scoreBoard.textContent = score;
+  totalScore.textContent = score;
 }
 
 // ZzFXMicro - Zuper Zmall Zound Zynth - v1.2.0 by Frank Force ~ 880 bytes
@@ -1107,10 +1116,10 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
-  // ENEMIES[enemyState].fx();
+  ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
-  archer();
+  // archer();
   // paladin();
   // duelist();
   // dualWielder();
