@@ -36,6 +36,10 @@ const scorePercent = document.getElementById('score-percent');
 const yourParries = document.getElementById('your-parries');
 const totalPossibleParries = document.getElementById('total-possible-parries');
 const parriesPercent = document.getElementById('parries-percent');
+// Last info
+const lastInfo = document.getElementById('last-info');
+const reloadButton = document.getElementById('reload-button');
+const reload = document.getElementById('reload');
 //
 const timeUntilParried = 33;
 const timeUntilSliced = 75;
@@ -89,7 +93,6 @@ class Sword {
     } else {
       // only for enemy sword
       if (this.slicing) {
-        // TODO: Maek this look more like an attack
         this.color = rrr;
       }
       if (!this.sliced) {
@@ -204,9 +207,6 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-// Let the color change
-// Timing
-
 const enemySwordLocation = getRandomConstrainedLocation(100, 600, 100, 400);
 class EnemySword extends Sword {
   constructor(parried = false, slicing = false) {
@@ -399,7 +399,7 @@ goSound.onclick = () => {
 
 function peasant() {
   if (pushedSwords < 5) {
-    pushSword(250, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
+    pushSword(250, 100, 600, 100, 400, chooseRandom(0, 90));
   } else if (pushedSwords < 10) {
     pushSword(100, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
@@ -473,6 +473,70 @@ function duelist() {
     transitionToNextStage();
   }
 }
+let lastComboIndex;
+function archer() {
+  const combos = [
+    {
+      x: 25,
+      y: 100,
+      a: 45,
+    },
+    {
+      x: 675,
+      y: 100,
+      a: -45,
+    },
+    {
+      x: 100,
+      y: 475,
+      a: -45,
+    },
+    {
+      x: 600,
+      y: 475,
+      a: 45,
+    },
+  ];
+  let combo, randomIndex;
+  if (pushedSwords < 16) {
+    if (tick % 75 === 0) {
+      randomIndex = getRandomInt(0, 3);
+      if (randomIndex === lastComboIndex) {
+        if (lastComboIndex === combos.length - 1) randomIndex = 0;
+        randomIndex = lastComboIndex + 1;
+      }
+      combo = combos[randomIndex];
+      lastComboIndex = randomIndex;
+      pushSword(1, combo.x, combo.x, combo.y, combo.y, combo.a);
+    }
+  } else if (pushedSwords < 32) {
+    if (tick % 150 === 0) {
+      let r1 = getRandomInt(0, 3);
+      let r2 = getRandomInt(0, 3);
+      while (r1 === r2) {
+        r2 = getRandomInt(0, 3);
+      }
+      pushSword(
+        1,
+        combos[r1].x,
+        combos[r1].x,
+        combos[r1].y,
+        combos[r1].y,
+        combos[r1].a
+      );
+      pushSword(
+        1,
+        combos[r2].x,
+        combos[r2].x,
+        combos[r2].y,
+        combos[r2].y,
+        combos[r2].a
+      );
+    }
+  } else {
+    transitionToNextStage();
+  }
+}
 
 // TODO: NOT WORKING YET :D
 function dualWielder() {
@@ -517,6 +581,13 @@ const ENEMIES = [
     description: '"Quick but predictable."',
     button: "I'm barbarian to it",
     fx: barbarian,
+    numberOfAttacks: 16,
+  },
+  {
+    name: 'Archer',
+    description: '"Long-ranged sniper"',
+    button: 'Ready, set, bow',
+    fx: archer,
     numberOfAttacks: 16,
   },
   {
@@ -873,6 +944,10 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function chooseRandomly(option1, option2) {
+  return Math.random() > 0.5 ? option1 : option2;
+}
+
 function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   const randomX = Math.random() * (xMax - xMin + 1) + xMin;
   const randomY = Math.random() * (yMax - yMin + 1) + yMin;
@@ -1026,9 +1101,10 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
-  ENEMIES[enemyState].fx();
+  // ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
+  archer();
   // paladin();
   // duelist();
   // dualWielder();
