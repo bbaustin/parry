@@ -42,7 +42,6 @@ const reloadButton = document.getElementById('reload-button');
 const reload = document.getElementById('reload');
 //
 const timeUntilParried = 33;
-const timeUntilSliced = 75;
 let hasSound = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +96,7 @@ class Sword {
       }
       if (!this.sliced) {
         context.fillStyle = this.makeGradient(
-          (this.timeSpentOnScreen * (100 / timeUntilSliced)) / 100
+          (this.timeSpentOnScreen * (100 / this.timeUntilSliced)) / 100
         );
       }
     }
@@ -209,7 +208,7 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const enemySwordLocation = getRandomConstrainedLocation(100, 600, 100, 400);
 class EnemySword extends Sword {
-  constructor(parried = false, slicing = false) {
+  constructor(parried = false, slicing = false, timeUntilSliced = 75) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
@@ -218,10 +217,11 @@ class EnemySword extends Sword {
     });
     this.parried = parried;
     this.slicing = slicing;
+    this.timeUntilSliced = timeUntilSliced;
   }
 
   handleSlice() {
-    if (this.timeSpentOnScreen >= timeUntilSliced) {
+    if (this.timeSpentOnScreen >= this.timeUntilSliced) {
       this.slicing = true;
 
       if (tick % 50 === 0) {
@@ -502,8 +502,11 @@ function archer() {
     if (tick % 75 === 0) {
       randomIndex = getRandomInt(0, 3);
       if (randomIndex === lastComboIndex) {
-        if (lastComboIndex === combos.length - 1) randomIndex = 0;
-        randomIndex = lastComboIndex + 1;
+        if (lastComboIndex === combos.length - 1) {
+          randomIndex = 0;
+        } else {
+          randomIndex = lastComboIndex + 1;
+        }
       }
       combo = combos[randomIndex];
       lastComboIndex = randomIndex;
@@ -522,7 +525,8 @@ function archer() {
         combos[r1].x,
         combos[r1].y,
         combos[r1].y,
-        combos[r1].a
+        combos[r1].a,
+        125
       );
       pushSword(
         1,
@@ -530,7 +534,8 @@ function archer() {
         combos[r2].x,
         combos[r2].y,
         combos[r2].y,
-        combos[r2].a
+        combos[r2].a,
+        125
       );
     }
   } else {
@@ -622,12 +627,13 @@ function goodbye() {
 // Enemy Utils //
 ////////////////
 
-function pushSword(msDelay, x1, x2, y1, y2, angle) {
+function pushSword(msDelay, x1, x2, y1, y2, angle, sliceTime = 75) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
     const location = getRandomConstrainedLocation(x1, x2, y1, y2);
     newEs.position = location;
     newEs.rotationAngle = angle;
+    newEs.timeUntilSliced = sliceTime;
     activeSwords.push(newEs);
     if (hasSound) {
       zzfx(
