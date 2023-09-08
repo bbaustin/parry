@@ -15,15 +15,19 @@ const gry = '#6a6a6a';
 let tick = 0;
 let score = 0;
 let roundScore = 0;
+let activeCollisionHappening = false;
+let parriedCount = 0;
 // HTML stuff
-const scoreBoard = document.getElementById('scoreBoard');
+const totalScore = document.getElementById('score');
 const info = document.getElementById('info');
 // Start info
 const startInfo = document.getElementById('start-info');
 // Enemy Info
+const enemyInfo = document.getElementById('enemy-info');
 const nextEnemy = document.getElementById('next-enemy');
 const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
+const goSound = document.getElementById('go-sound');
 // Results Info
 const roundInfo = document.getElementById('round-info');
 const previousRoundResults = document.getElementById('previous-round-results');
@@ -33,18 +37,13 @@ const scorePercent = document.getElementById('score-percent');
 const yourParries = document.getElementById('your-parries');
 const totalPossibleParries = document.getElementById('total-possible-parries');
 const parriesPercent = document.getElementById('parries-percent');
+// Last info
+const lastInfo = document.getElementById('last-info');
+const reloadButton = document.getElementById('reload-button');
+const reload = document.getElementById('reload');
 //
 const timeUntilParried = 33;
-const timeUntilSliced = 75;
-const grades = [
-  'Parryble... (terrible)',
-  'Not quite up to par(ry)',
-  'Parry good',
-  'Imparryssive',
-  'Extraordinparry!',
-  'Legendparry!',
-];
-let activeCollisionHappening = false;
+let hasSound = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -94,12 +93,11 @@ class Sword {
     } else {
       // only for enemy sword
       if (this.slicing) {
-        // TODO: Maek this look more like an attack
         this.color = rrr;
       }
       if (!this.sliced) {
         context.fillStyle = this.makeGradient(
-          (this.timeSpentOnScreen * (100 / timeUntilSliced)) / 100
+          (this.timeSpentOnScreen * (100 / this.timeUntilSliced)) / 100
         );
       }
     }
@@ -209,12 +207,9 @@ document.addEventListener('keyup', (event) => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-// Let the color change
-// Timing
-
-const enemySwordLocation = getRandomLocation();
+const enemySwordLocation = getRandomConstrainedLocation(100, 600, 100, 400);
 class EnemySword extends Sword {
-  constructor(parried = false, slicing = false) {
+  constructor(parried = false, slicing = false, timeUntilSliced = 75) {
     super({
       position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
@@ -223,21 +218,60 @@ class EnemySword extends Sword {
     });
     this.parried = parried;
     this.slicing = slicing;
+    this.timeUntilSliced = timeUntilSliced;
   }
 
   handleSlice() {
-    if (this.timeSpentOnScreen >= timeUntilSliced) {
+    if (this.timeSpentOnScreen >= this.timeUntilSliced) {
       this.slicing = true;
 
       if (tick % 50 === 0) {
         changeScore(90, false);
         this.slicing = false;
         this.sliced = true;
+        if (hasSound) {
+          zzfx(
+            ...[
+              ,
+              ,
+              1000,
+              0.02,
+              0.1,
+              0.12,
+              1,
+              1.78,
+              -9.5,
+              0.2,
+              ,
+              ,
+              ,
+              0.1,
+              ,
+              ,
+              ,
+              0.47,
+              0.02,
+              0.06,
+            ]
+          ); // Pickup 101
+        }
+      }
+    }
+  }
+
+  handleParry() {
+    if (this.timeSpentColliding >= timeUntilParried) {
+      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
+      changeScore(addedScore, true);
+      this.parried = true;
+      parriedCount++;
+      activeCollisionHappening = false;
+      if (hasSound) {
         zzfx(
           ...[
             ,
             ,
-            1000,
+            1300,
             0.02,
             0.1,
             0.12,
@@ -258,40 +292,6 @@ class EnemySword extends Sword {
           ]
         ); // Pickup 101
       }
-    }
-  }
-
-  handleParry() {
-    if (this.timeSpentColliding >= timeUntilParried) {
-      // TODO: This is wrong lol
-      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
-      changeScore(addedScore, true);
-      this.parried = true;
-      activeCollisionHappening = false;
-      zzfx(
-        ...[
-          ,
-          ,
-          1300,
-          0.02,
-          0.1,
-          0.12,
-          1,
-          1.78,
-          -9.5,
-          0.2,
-          ,
-          ,
-          ,
-          0.1,
-          ,
-          ,
-          ,
-          0.47,
-          0.02,
-          0.06,
-        ]
-      ); // Pickup 101
     }
     if (this.isColliding) {
       this.timeSpentColliding++;
@@ -326,6 +326,7 @@ function changeToInfoState() {
   } else {
     roundInfo.style.display = 'block';
     startInfo.style.display = 'none';
+    goSound.style.display = 'none';
   }
   handleInfoChange();
 }
@@ -337,14 +338,52 @@ function stopGameLoop() {
 
 function handleInfoChange() {
   stopGameLoop();
+  // first update score stuff
+  if (enemyState > -1) {
+    let enoa = ENEMIES[enemyState].numberOfAttacks;
+    previousRoundResults.textContent = determineRoundRating(enoa);
+    scorePercent.textContent = Math.round((roundScore / (enoa * 100)) * 100);
+    yourParries.textContent = parriedCount;
+    totalPossibleParries.textContent = enoa;
+    parriesPercent.textContent = Math.round((parriedCount / enoa) * 100);
+    yourScore.textContent = roundScore;
+    totalPossibleScore.textContent = 100 * enoa;
+  }
+  //then update enemy stuff
   enemyState += 1;
   info.style.display = 'flex';
-  nextEnemy.textContent = ENEMIES[enemyState].name;
-  nextEnemyDescription.textContent = ENEMIES[enemyState].description;
-  go.textContent = ENEMIES[enemyState].button;
+  if (enemyState === ENEMIES.length) {
+    lastInfo.style.display = 'flex';
+    enemyInfo.style.display = 'none';
+  } else {
+    enemyInfo.style.display = 'flex';
+    nextEnemy.textContent = ENEMIES[enemyState].name;
+    nextEnemyDescription.textContent = ENEMIES[enemyState].description;
+    go.textContent = ENEMIES[enemyState].button;
+  }
+}
+
+function determineRoundRating(enoa) {
+  const grades = [
+    'Parrylously bad.',
+    'Parryble... (terrible).',
+    'Not quite up to par(ry).',
+    'Not parryticularly notable.',
+    'Somewhat imparryssive...',
+    'Parretty good...',
+    'Parry good!',
+    'Extraordinparry!',
+    'Legendparry!',
+  ];
+  const max = enoa * 100;
+  for (let i = 1; i <= grades.length; i++) {
+    if (roundScore <= max * (i / grades.length)) return grades[i - 1];
+  }
 }
 
 function changeToGameState() {
+  parriedCount = 0;
+  roundScore = 0;
   pushedSwords = 0;
   activeSwords.length = 0;
   activeSwords.push(ps);
@@ -357,17 +396,23 @@ go.onclick = () => {
   if (gameState < ENEMIES.length - 1) changeToGameState();
 };
 
+goSound.onclick = () => {
+  changeToGameState();
+  zzfxX = new AudioContext();
+  hasSound = true;
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Patterns                                         //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function peasant() {
   if (pushedSwords < 5) {
-    pushSword(300, 100, 600, 100, 400, Math.random() > 0.5 ? 90 : 0);
+    pushSword(250, 100, 600, 100, 400, chooseRandomly(0, 90));
   } else if (pushedSwords < 10) {
-    pushSword(150, 100, 600, 100, 400, getRandomInt(0, 359));
+    pushSword(100, 100, 600, 100, 400, getRandomInt(0, 359));
   } else {
-    changeToInfoState();
+    transitionToNextStage(375);
   }
 }
 
@@ -383,9 +428,7 @@ function barbarian() {
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage(400);
   }
 }
 
@@ -408,9 +451,7 @@ function paladin() {
       getRandomInt(-100, 100)
     );
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage();
   }
 }
 
@@ -438,111 +479,212 @@ function duelist() {
       pushedSwords % 2 === 0 ? -45 : 45
     );
   } else {
-    if (tick % 200 === 0) {
-      changeToInfoState();
-    }
+    transitionToNextStage();
   }
 }
 
-// TODO: NOT WORKING YET :D
+let lastComboIndex;
+function archer() {
+  const combos = [
+    {
+      x: 25,
+      y: 100,
+      a: 45,
+    },
+    {
+      x: 675,
+      y: 100,
+      a: -45,
+    },
+    {
+      x: 100,
+      y: 475,
+      a: -45,
+    },
+    {
+      x: 600,
+      y: 475,
+      a: 45,
+    },
+  ];
+  let combo, randomIndex;
+  if (pushedSwords < 10) {
+    if (tick % 75 === 0) {
+      randomIndex = getRandomInt(0, 3);
+      if (randomIndex === lastComboIndex) {
+        if (lastComboIndex === combos.length - 1) {
+          randomIndex = 0;
+        } else {
+          randomIndex = lastComboIndex + 1;
+        }
+      }
+      combo = combos[randomIndex];
+      lastComboIndex = randomIndex;
+      pushSword(1, combo.x, combo.x, combo.y, combo.y, combo.a);
+    }
+  } else if (pushedSwords < 26) {
+    if (tick % 150 === 0) {
+      let r1 = getRandomInt(0, 3);
+      let r2 = getRandomInt(0, 3);
+      while (r1 === r2) {
+        r2 = getRandomInt(0, 3);
+      }
+      pushSword(
+        1,
+        combos[r1].x,
+        combos[r1].x,
+        combos[r1].y,
+        combos[r1].y,
+        combos[r1].a,
+        125
+      );
+      pushSword(
+        1,
+        combos[r2].x,
+        combos[r2].x,
+        combos[r2].y,
+        combos[r2].y,
+        combos[r2].a,
+        125,
+        false
+      );
+    }
+  } else {
+    transitionToNextStage(700);
+  }
+}
+
 function dualWielder() {
-  if (pushedSwords < 16) {
-    let angle, x1, x2, y1, y2;
-    // let angle = getRandomInt(-90, 90);
-    // let x1 = getRandomInt(100, 600);
-    // let x2 = x1 + angle;
-    // let y1 = getRandomInt(200, 400);
-    // let y2 = y1 - 90 - angle;
-    if (pushedSwords % 2 === 0) {
-      angle = getRandomInt(-90, 90);
-      x1 = getRandomInt(100, 600);
-      x2 = x2 = x1 + angle / 4;
-      y1 = getRandomInt(200, 400);
-      y2 = y1 + Math.abs(90 - angle / 4);
-    }
-    console.log(angle);
-    pushSword(100, x1, x1, y1, y1, angle);
-    pushSword(100, x2, x2, y2, y2, angle);
+  if (pushedSwords < 32) {
+    // get a random x and y
+    const x1 = getRandomInt(75, 600);
+    const y1 = getRandomInt(100, 475);
+    // have combos of angles, x2 addend, and x1s addend
+    const combos = [
+      { angle: 0, x2a: 30, y2a: 0 },
+      {
+        angle: 90,
+        x2a: 0,
+        y2a: -30,
+      },
+      {
+        angle: 45,
+        x2a: 20,
+        y2a: 20,
+      },
+    ];
+    // do some math to get x2
+    const index = Math.floor(Math.random() * combos.length);
+    let x2 = x1 + combos[index].x2a;
+    let y2 = y1 + combos[index].y2a;
+    // push
+    pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
+    pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
+  } else {
+    transitionToNextStage();
   }
 }
 
-function crusader() {}
+// function crusader() {}
+
+function transitionToNextStage(delay = 200) {
+  if (tick % delay === 0) {
+    changeToInfoState();
+  }
+}
 
 const ENEMIES = [
   {
     name: 'Peasant',
-    description: 'Practically untrained with a sword. ',
-    button: 'Start',
+    description: '"Slow but unpredictable."',
+    button: 'Start (without sound)',
     fx: peasant,
+    numberOfAttacks: 10,
   },
   {
     name: 'Barbarian',
-    description:
-      'Quick, but dumb. Try to rack up a high score with their predictable attacks.',
+    description: '"Quick but predictable."',
     button: "I'm barbarian to it",
     fx: barbarian,
-  },
-  {
-    name: 'Duelist',
-    description:
-      'A skilled combatant. Try to keep up with their precise attacks. En garde!',
-    button: "Let's duel it",
-    fx: duelist,
+    numberOfAttacks: 16,
   },
   {
     name: 'Paladin',
-    description: 'High-INT barbarian',
+    description: '"Barbarian with higher intelligence stats."',
     button: "I'm paladin to it",
     fx: paladin,
+    numberOfAttacks: 16,
   },
   {
-    //TODO: Detemrine if you want this
-    name: 'Thanks for playing!',
-    description: `Final score: ${score}`,
-    button: 'Go back to JS13K Games',
-    fx: goodbye,
+    name: 'Archer',
+    description: '"Long-ranged sniper"',
+    button: 'Ready, set, bow',
+    fx: archer,
+    numberOfAttacks: 26,
+  },
+  {
+    name: 'Duelist',
+    description: '"Skilled and precise."',
+    button: "Let's duel it",
+    fx: duelist,
+    numberOfAttacks: 16,
+  },
+  {
+    name: 'Dual Wielder',
+    description: '"High-speed assassin"',
+    button: "Let's dual it",
+    fx: dualWielder,
+    numberOfAttacks: 32,
   },
 ];
-
-function goodbye() {
-  window.location.replace('https://js13kgames.com/'); //TODO: Does this work? lol
-}
 
 /////////////////
 // Enemy Utils //
 ////////////////
 
-function pushSword(msDelay, x1, x2, y1, y2, angle) {
+function pushSword(
+  msDelay,
+  x1,
+  x2,
+  y1,
+  y2,
+  angle,
+  sliceTime = 75,
+  shouldPlaySound = true
+) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
     const location = getRandomConstrainedLocation(x1, x2, y1, y2);
     newEs.position = location;
     newEs.rotationAngle = angle;
+    newEs.timeUntilSliced = sliceTime;
     activeSwords.push(newEs);
-    zzfx(
-      ...[
-        ,
-        ,
-        90,
-        0.02,
-        0.06,
-        0.07,
-        1,
-        0.13,
-        ,
-        ,
-        ,
-        ,
-        ,
-        0.2,
-        ,
-        0.3,
-        ,
-        0.91,
-        0.08,
-        0.15,
-      ]
-    ); // Hit 110
+    if (hasSound && shouldPlaySound) {
+      zzfx(
+        ...[
+          ,
+          ,
+          90,
+          0.02,
+          0.06,
+          0.07,
+          1,
+          0.13,
+          ,
+          ,
+          ,
+          ,
+          ,
+          0.2,
+          ,
+          0.3,
+          ,
+          0.91,
+          0.08,
+          0.15,
+        ]
+      ); // Hit 110
+    }
     pushedSwords++;
   }
 }
@@ -832,10 +974,8 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function getRandomLocation() {
-  const randomX = 100 + Math.random() * (canvas.width - 100);
-  const randomY = 100 + Math.random() * (canvas.height - 100);
-  return { x: randomX, y: randomY };
+function chooseRandomly(option1, option2) {
+  return Math.random() > 0.5 ? option1 : option2;
 }
 
 function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
@@ -871,7 +1011,7 @@ function changeScore(newPoints, isPositive) {
     score -= newPoints;
     roundScore -= newPoints;
   }
-  scoreBoard.textContent = score;
+  totalScore.textContent = score;
 }
 
 // ZzFXMicro - Zuper Zmall Zound Zynth - v1.2.0 by Frank Force ~ 880 bytes
@@ -965,7 +1105,6 @@ zzfx = // play sound
     b.start();
     return b;
   };
-zzfxX = new AudioContext();
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                         Game Loop Stuff                                          //
@@ -995,6 +1134,7 @@ function gameLoop() {
   ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
+  // archer();
   // paladin();
   // duelist();
   // dualWielder();

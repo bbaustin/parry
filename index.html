@@ -25,7 +25,8 @@
           <li>Move your sword with the mouse.</li>
           <li>Rotate with Q or E.</li>
           <li>
-            Parry enemy attacks by intersecting the enemy sword for .5 seconds.
+            Parry enemy attacks by intersecting the enemy sword for half a
+            second.
           </li>
           <li>
             Try to create perpendicular angles between both swords (i.e. make a
@@ -42,31 +43,39 @@
         <h1 id="previous-round-results"></h1>
         <ul>
           <li>
-            <span id="your-score"></span> /
-            <span id="total-possible-score"></span> points (<span
-              id="score-percent"
-            ></span
-            >%)
+            <span id="your-score"></span> points /
+            <span id="total-possible-score"></span> total possible points <br />
+            (<span id="score-percent"></span>%)
           </li>
           <li>
-            <span id="your-parries"></span> strikes parried /
-            <span id="total-possible-parries"> total strikes</span> (<span
-              id="parries-percent"
-            ></span
-            >%)
+            <span id="your-parries"></span> enemy strikes parried /
+            <span id="total-possible-parries"></span> total enemy strikes <br />
+            (<span id="parries-percent"></span>%)
           </li>
         </ul>
       </div>
       <div id="enemy-info">
         <h3>Next Enemy...</h3>
-        <h1 id="next-enemy"></h1>
         <div>
+          <h1 id="next-enemy"></h1>
           <p id="next-enemy-description"></p>
         </div>
         <div>
           <p>Ready?</p>
+          <button id="go-sound">Start (with sound)</button>
           <button id="go"></button>
         </div>
+      </div>
+      <div id="last-info">
+        <h1>Thanks for playing!</h1>
+        <ul>
+          <li>
+            <a href="https://github.com/bbaustin/first-person-slicer"
+              >See code</a
+            >
+          </li>
+          <li><a href="https://js13kgames.com/">Back to js13kGames</a></li>
+        </ul>
       </div>
     </section>
     <main>
@@ -75,8 +84,11 @@
         width="700"
         height="500"
       ></canvas>
-      <h2 id="scoreBoard"></h2>
     </main>
+    <div id="scoreBoard">
+      <span>Score:</span>
+      <p id="score">0</p>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>
