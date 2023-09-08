@@ -551,25 +551,33 @@ function archer() {
   }
 }
 
-// TODO: NOT WORKING YET :D
+// WIP!
 function dualWielder() {
   if (pushedSwords < 16) {
-    let angle, x1, x2, y1, y2;
-    // let angle = getRandomInt(-90, 90);
-    // let x1 = getRandomInt(100, 600);
-    // let x2 = x1 + angle;
-    // let y1 = getRandomInt(200, 400);
-    // let y2 = y1 - 90 - angle;
-    if (pushedSwords % 2 === 0) {
-      angle = getRandomInt(-90, 90);
-      x1 = getRandomInt(100, 600);
-      x2 = x2 = x1 + angle / 4;
-      y1 = getRandomInt(200, 400);
-      y2 = y1 + Math.abs(90 - angle / 4);
-    }
-    console.log(angle);
-    pushSword(100, x1, x1, y1, y1, angle);
-    pushSword(100, x2, x2, y2, y2, angle);
+    // get a random x and y
+    const x1 = getRandomInt(75, 600);
+    const y1 = getRandomInt(25, 425);
+    // have combos of angles, x2 addend, and x1s addend
+    const combos = [
+      { angle: 0, x2a: 30, y2a: 0 },
+      {
+        angle: 90,
+        x2a: 0,
+        y2a: 30,
+      },
+      {
+        angle: 45,
+        x2a: 15,
+        y2a: 15,
+      },
+    ];
+    // do some math to get x2
+    const index = Math.floor(Math.random() * combos.length);
+    let x2 = x1 + combos[index].x2a;
+    let y2 = y1 + combos[index].y2a;
+    // push
+    pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
+    pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
   }
 }
 
@@ -597,6 +605,13 @@ const ENEMIES = [
     numberOfAttacks: 16,
   },
   {
+    name: 'Paladin',
+    description: '"Barbarian with higher intelligence stats."',
+    button: "I'm paladin to it",
+    fx: paladin,
+    numberOfAttacks: 16,
+  },
+  {
     name: 'Archer',
     description: '"Long-ranged sniper"',
     button: 'Ready, set, bow',
@@ -611,11 +626,10 @@ const ENEMIES = [
     numberOfAttacks: 16,
   },
   {
-    name: 'Paladin',
-    description: '"Barbarian but smart."',
-    button: "I'm paladin to it",
-    fx: paladin,
-    numberOfAttacks: 16,
+    name: 'Dual Wielder',
+    description: '"High-speed assassin"',
+    button: "Let's dual it",
+    fx: dualWielder,
   },
 ];
 
@@ -1116,13 +1130,13 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
-  ENEMIES[enemyState].fx();
+  // ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
   // archer();
   // paladin();
   // duelist();
-  // dualWielder();
+  dualWielder();
   requestId = requestAnimationFrame(gameLoop);
 }
 
