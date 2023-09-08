@@ -365,8 +365,10 @@ function handleInfoChange() {
 
 function determineRoundRating(enoa) {
   const grades = [
+    'Parrylously bad.',
     'Parryble... (terrible).',
     'Not quite up to par(ry).',
+    'Not parryticularly notable.',
     'Somewhat imparryssive...',
     'Parretty good...',
     'Parry good!',
@@ -426,7 +428,7 @@ function barbarian() {
   } else if (pushedSwords < 16) {
     pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
   } else {
-    transitionToNextStage(600);
+    transitionToNextStage(400);
   }
 }
 
@@ -480,6 +482,7 @@ function duelist() {
     transitionToNextStage();
   }
 }
+
 let lastComboIndex;
 function archer() {
   const combos = [
@@ -547,28 +550,27 @@ function archer() {
       );
     }
   } else {
-    transitionToNextStage(600);
+    transitionToNextStage(700);
   }
 }
 
-// WIP!
 function dualWielder() {
-  if (pushedSwords < 16) {
+  if (pushedSwords < 32) {
     // get a random x and y
     const x1 = getRandomInt(75, 600);
-    const y1 = getRandomInt(25, 425);
+    const y1 = getRandomInt(100, 475);
     // have combos of angles, x2 addend, and x1s addend
     const combos = [
       { angle: 0, x2a: 30, y2a: 0 },
       {
         angle: 90,
         x2a: 0,
-        y2a: 30,
+        y2a: -30,
       },
       {
         angle: 45,
-        x2a: 15,
-        y2a: 15,
+        x2a: 20,
+        y2a: 20,
       },
     ];
     // do some math to get x2
@@ -578,10 +580,12 @@ function dualWielder() {
     // push
     pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
     pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
+  } else {
+    transitionToNextStage();
   }
 }
 
-function crusader() {}
+// function crusader() {}
 
 function transitionToNextStage(delay = 200) {
   if (tick % delay === 0) {
@@ -630,12 +634,9 @@ const ENEMIES = [
     description: '"High-speed assassin"',
     button: "Let's dual it",
     fx: dualWielder,
+    numberOfAttacks: 32,
   },
 ];
-
-function goodbye() {
-  window.location.replace('https://js13kgames.com/'); //TODO: Does this work? lol
-}
 
 /////////////////
 // Enemy Utils //
@@ -1130,13 +1131,13 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
-  // ENEMIES[enemyState].fx();
+  ENEMIES[enemyState].fx();
   // peasant();
   // barbarian();
   // archer();
   // paladin();
   // duelist();
-  dualWielder();
+  // dualWielder();
   requestId = requestAnimationFrame(gameLoop);
 }
 
