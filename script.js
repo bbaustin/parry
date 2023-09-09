@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Canvas and Global Stuff                                     //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-const canvas = document.getElementById('canvas');
-const context = canvas.getContext('2d');
-let canvasPosition = getPositionRelativeToCanvas(canvas);
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+let cvsPos = gprtc(cvs);
 let mouseX = 0;
 let mouseY = 0;
 const blu = '#6a6aff';
@@ -14,41 +14,17 @@ const gry = '#6a6a6a';
 // Refers to frame of gameLoop. Used for some timing stuff
 let tick = 0;
 let score = 0;
-let roundScore = 0;
-let activeCollisionHappening = false;
-let parriedCount = 0;
-// HTML stuff
-const totalScore = document.getElementById('score');
+let rndScr = 0; //roundScore
+let isColNow = false; //isCollidingNow
+
+const tup = 33; // time until parried
+let hasSound = false;
 const info = document.getElementById('info');
-// Start info
-const startInfo = document.getElementById('start-info');
-// Enemy Info
-const enemyInfo = document.getElementById('enemy-info');
-const nextEnemy = document.getElementById('next-enemy');
-const nextEnemyDescription = document.getElementById('next-enemy-description');
 const go = document.getElementById('go');
 const goSound = document.getElementById('go-sound');
-// Results Info
 const roundInfo = document.getElementById('round-info');
-const previousRoundResults = document.getElementById('previous-round-results');
-const yourScore = document.getElementById('your-score');
-const totalPossibleScore = document.getElementById('total-possible-score');
-const scorePercent = document.getElementById('score-percent');
-const yourParries = document.getElementById('your-parries');
-const totalPossibleParries = document.getElementById('total-possible-parries');
-const parriesPercent = document.getElementById('parries-percent');
-// Last info
-const lastInfo = document.getElementById('last-info');
-const reloadButton = document.getElementById('reload-button');
-const reload = document.getElementById('reload');
-//
-const timeUntilParried = 33;
-let hasSound = false;
+
 const lastHighScore = localStorage.getItem('parryHighScore') || 0;
-const newHighScore = document.getElementById('new-high-score');
-const highScore = document.getElementById('high-score');
-const lastParryAngle = document.getElementById('last-parry-angle');
-const lastParryScore = document.getElementById('last-parry-score');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -56,44 +32,41 @@ const lastParryScore = document.getElementById('last-parry-score');
 
 class Sword {
   constructor({
-    position = { x: 0, y: 0 },
+    pos = { x: 0, y: 0 },
     color = gry,
-    defaultColor = gry,
-    collidingColor = red,
+    colCol = red, //collidingColor
     width = 10,
     height = 100,
-    rotationAngle = 0,
-    isColliding = false,
-    timeSpentColliding = 0,
-    timeSpentOnScreen = 0,
+    ra = 0, // rotationAngle
+    isCol = false, // isColliding
+    tsCol = 0, //timeSpentColliding
+    tsOS = 0, // timeSpentOnScreen
     id = tick,
     sliced = false,
   }) {
-    this.position = position;
+    this.pos = pos;
     this.color = color;
-    this.defaultColor = defaultColor;
-    this.collidingColor = collidingColor;
+    this.colCol = colCol;
     this.width = width;
     this.height = height;
-    this.rotationAngle = rotationAngle;
-    this.isColliding = isColliding;
-    this.timeSpentColliding = timeSpentColliding;
-    this.timeSpentOnScreen = timeSpentOnScreen;
+    this.ra = ra;
+    this.isCol = isCol;
+    this.tsCol = tsCol;
+    this.tsOS = tsOS;
     this.id = id;
     this.sliced = sliced;
   }
 
   draw() {
-    context.beginPath();
-    //or === 0? try. could also have a "isPlayer" attribute
+    ctx.beginPath();
     if (this.id < 50) {
       // only for PlayerSword
-      if (activeCollisionHappening) {
-        context.fillStyle = this.makeGradient(
-          (this.timeSpentColliding * (100 / timeUntilParried)) / 100
+      if (isColNow) {
+        ctx.fillStyle = this.drawGrad(
+          (this.tsCol * (100 / tup)) / 100
         );
       } else {
-        context.fillStyle = this.color;
+        ctx.fillStyle = this.color;
       }
     } else {
       // only for enemy sword
@@ -101,48 +74,47 @@ class Sword {
         this.color = rrr;
       }
       if (!this.sliced) {
-        context.fillStyle = this.makeGradient(
-          (this.timeSpentOnScreen * (100 / this.timeUntilSliced)) / 100
+        ctx.fillStyle = this.drawGrad(
+          (this.tsOS * (100 / this.tus)) / 100
         );
       }
     }
-    const x = this.position.x;
-    const y = this.position.y;
-    context.moveTo(x - 5, y);
-    context.lineTo(x - 5, y - this.height);
-    context.lineTo(x, y - this.height - 10);
-    context.lineTo(x + 5, y - this.height);
-    context.lineTo(x + 5, y);
-    context.lineTo(x - 5, y);
-    context.fill();
+    const x = this.pos.x;
+    const y = this.pos.y;
+    ctx.moveTo(x - 5, y);
+    ctx.lineTo(x - 5, y - this.height);
+    ctx.lineTo(x, y - this.height - 10);
+    ctx.lineTo(x + 5, y - this.height);
+    ctx.lineTo(x + 5, y);
+    ctx.lineTo(x - 5, y);
+    ctx.fill();
   }
 
-  drawRotation() {
-    // Save the context state before transformations
-    context.save();
+  drawRot() {
+    // Save the ctx state before transformations
+    ctx.save();
     // Apply rotation at the calculated center point
-    context.translate(this.position.x, this.position.y);
-    context.rotate((this.rotationAngle * Math.PI) / 180);
-    context.translate(-this.position.x, -this.position.y);
+    ctx.translate(this.pos.x, this.pos.y);
+    ctx.rotate((this.ra * Math.PI) / 180);
+    ctx.translate(-this.pos.x, -this.pos.y);
     this.draw();
-    // Restore the original context state
-    context.restore();
+    // Restore the original ctx state
+    ctx.restore();
   }
 
-  makeGradient(progressValue) {
-    const first = this.position.x - this.width / 2;
-    const second = this.position.y;
-    const third = this.position.x + this.width / 2;
-    const fourth = this.position.y - this.height - 10;
-    const colorStopBeg = 0;
-    let colorStopMid = progressValue > 1.0 ? 1.0 : progressValue;
-    const colorStopEnd = 1.0;
-    const gradient = context.createLinearGradient(first, second, third, fourth);
-    gradient.addColorStop(colorStopBeg, this.color);
-    gradient.addColorStop(colorStopMid, this.color);
-    gradient.addColorStop(colorStopMid, this.collidingColor);
-    gradient.addColorStop(colorStopEnd, this.collidingColor);
-    return gradient;
+  drawGrad(prog) {
+    let mid = prog > 1.0 ? 1.0 : prog;
+    const g = ctx.createLinearGradient(
+      this.pos.x - this.width / 2,
+      this.pos.y,
+      this.pos.x + this.width / 2,
+      this.pos.y - this.height - 10
+    );
+    g.addColorStop(0, this.color);
+    g.addColorStop(mid, this.color);
+    g.addColorStop(mid, this.colCol);
+    g.addColorStop(1, this.colCol);
+    return g;
   }
 }
 
@@ -153,30 +125,28 @@ class Sword {
 class PlayerSword extends Sword {
   constructor() {
     super({
-      position: { x: mouseX, y: mouseY },
+      pos: { x: mouseX, y: mouseY },
       color: blu,
-      defaultColor: blu,
-      collidingColor: grn,
+      colCol: grn,
     });
   }
 
-  checkSwordRotation() {
+  csr() { //check sword rotation
     // Why 9? The sword can rotate between -90 and 90 degrees.
     // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
     // This also explains the 81 below (90 - 9 = 81).
-    const angleInDegrees = 9;
-    if (keyStateForPlayerSwordRotation.q && this.rotationAngle >= -81) {
-      this.rotationAngle -= angleInDegrees;
+    if (ksfpsr.q && this.ra >= -81) {
+      this.ra -= 9;
     }
-    if (keyStateForPlayerSwordRotation.e && this.rotationAngle <= 81) {
-      this.rotationAngle += angleInDegrees;
+    if (ksfpsr.e && this.ra <= 81) {
+      this.ra += 9;
     }
-    this.drawRotation();
+    this.drawRot();
   }
 
-  determineTimeSpentColliding() {
-    if (this.isColliding) {
-      this.timeSpentColliding++;
+  dTSCol() { //determine this sword collision i think?
+    if (this.isCol) {
+      this.tsCol++;
     }
   }
 }
@@ -186,7 +156,7 @@ const ps = new PlayerSword();
 /**
  * Used by event listeners directly below.
  */
-let keyStateForPlayerSwordRotation = {
+let ksfpsr = { //keystate for player sword rotation
   q: false,
   e: false,
 };
@@ -196,46 +166,41 @@ let keyStateForPlayerSwordRotation = {
  */
 document.addEventListener('keydown', (event) => {
   if (event.key === 'q') {
-    keyStateForPlayerSwordRotation.q = true;
+    ksfpsr.q = true;
   } else if (event.key === 'e') {
-    keyStateForPlayerSwordRotation.e = true;
+    ksfpsr.e = true;
   }
 });
 document.addEventListener('keyup', (event) => {
   if (event.key === 'q') {
-    keyStateForPlayerSwordRotation.q = false;
+    ksfpsr.q = false;
   } else if (event.key === 'e') {
-    keyStateForPlayerSwordRotation.e = false;
+    ksfpsr.e = false;
   }
 });
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-const enemySwordLocation = getRandomConstrainedLocation(100, 600, 100, 400);
 class EnemySword extends Sword {
-  constructor(parried = false, slicing = false, timeUntilSliced = 75) {
+  constructor(parried = false, slicing = false, tus = 75) {
     super({
-      position: { x: enemySwordLocation.x, y: enemySwordLocation.y },
       color: red,
-      defaultColor: red,
-      collidingColor: gry,
+      colCol: gry,
     });
     this.parried = parried;
     this.slicing = slicing;
-    this.timeUntilSliced = timeUntilSliced;
+    this.tus = tus; //time until sliced
   }
 
   handleSlice() {
-    if (this.timeSpentOnScreen >= this.timeUntilSliced) {
+    if (this.tsOS >= this.tus) {
       this.slicing = true;
 
       if (tick % 50 === 0) {
         changeScore(90, false);
         this.slicing = false;
         this.sliced = true;
-        lastParryAngle.textContent = '-';
-        lastParryScore.textContent = -90;
         if (hasSound) {
           zzfx(
             ...[
@@ -267,17 +232,11 @@ class EnemySword extends Sword {
   }
 
   handleParry() {
-    if (this.timeSpentColliding >= timeUntilParried) {
-      const [angleDifference, addedScore] = calculatePoints(
-        this.rotationAngle,
-        ps.rotationAngle
-      );
+    if (this.tsCol >= tup) {
+      const addedScore = calcPts(this.ra, ps.ra);
       changeScore(addedScore, true);
-      lastParryAngle.textContent = `${angleDifference}°`;
-      lastParryScore.textContent = addedScore;
       this.parried = true;
-      parriedCount++;
-      activeCollisionHappening = false;
+      isColNow = false;
       if (hasSound) {
         zzfx(
           ...[
@@ -305,12 +264,12 @@ class EnemySword extends Sword {
         ); // Pickup 101
       }
     }
-    if (this.isColliding) {
-      this.timeSpentColliding++;
-      activeCollisionHappening = true;
+    if (this.isCol) {
+      this.tsCol++;
+      isColNow = true;
     } else {
-      this.timeSpentOnScreen++;
-      if (this.timeSpentColliding > 0) this.timeSpentColliding--;
+      this.tsOS++;
+      if (this.tsCol > 0) this.tsCol--;
     }
   }
 }
@@ -321,65 +280,58 @@ class EnemySword extends Sword {
 
 let enemyState = -1;
 let gameState = false;
-let pushedSwords = 0;
+let numEs = 0;
 
-function changeToInfoState() {
-  if (enemyState === -1) {
-    roundInfo.style.display = 'none';
-  } else {
-    roundInfo.style.display = 'block';
-    startInfo.style.display = 'none';
-    goSound.style.display = 'none';
-  }
-  handleInfoChange();
-}
-
-function stopGameLoop() {
-  cancelAnimationFrame(requestId);
-  gameState = false;
-}
-
-function handleInfoChange() {
-  stopGameLoop();
+function goInfo() {
+  if (enemyState > -1) goSound.style.display = 'none';
+  roundInfo.style.display = 'flex';
+stopGameLoop();
   // first update score stuff
   if (enemyState > -1) {
-    let enoa = ENEMIES[enemyState].numberOfAttacks;
-    previousRoundResults.textContent = determineRoundRating(enoa);
-    scorePercent.textContent = Math.round((roundScore / (enoa * 100)) * 100);
-    yourParries.textContent = parriedCount;
-    totalPossibleParries.textContent = enoa;
-    parriesPercent.textContent = Math.round((parriedCount / enoa) * 100);
-    yourScore.textContent = roundScore;
-    totalPossibleScore.textContent = 100 * enoa;
+    let numAttacks = ENEMIES[enemyState].numAtt;
+    document.getElementById('rating').textContent =
+      determineRoundRating(numAttacks);
+    document.getElementById('score-percent').textContent = Math.max(
+      Math.round((rndScr / (numAttacks * 100)) * 100),
+      0
+    );
+    document.getElementById('your-score').textContent = rndScr;
+    document.getElementById('possible-score').textContent = 100 * numAttacks;
+  } else {
+    roundInfo.style.display = 'none';
   }
   //then update enemy stuff
   enemyState += 1;
   info.style.display = 'flex';
   if (enemyState === ENEMIES.length) {
-    lastInfo.style.display = 'flex';
-    enemyInfo.style.display = 'none';
+    document.getElementById('last-info').style.display = 'flex';
+    document.getElementById('enemy-info').style.display = 'none';
     updateLocalStorage();
   } else {
-    enemyInfo.style.display = 'flex';
-    nextEnemy.textContent = ENEMIES[enemyState].name;
-    nextEnemyDescription.textContent = ENEMIES[enemyState].description;
+    document.getElementById('next-enemy').textContent =
+      ENEMIES[enemyState].name;
     go.textContent = ENEMIES[enemyState].button;
-  }
+  }}
+
+function stopGameLoop() {
+  cancelAnimationFrame(reqId);
+  gameState = false;
 }
 
 function updateLocalStorage() {
   if (score > lastHighScore) {
     localStorage.setItem('parryHighScore', score);
-    newHighScore.style.display = 'block';
+    document.getElementById('new-high-score').style.display = 'block';
   }
-  highScore.textContent = localStorage.getItem('parryHighScore');
+  document.getElementById('high-score').textContent =
+    localStorage.getItem('parryHighScore');
 }
 
-function determineRoundRating(enoa) {
+function determineRoundRating(numAttacks) {
   const grades = [
     'Parrylously bad.',
-    'Parryble... (terrible).',
-    'Not quite up to par(ry).',
+    'Perrible...',
+    'Not up to par(ry).',
     'Not parryticularly notable.',
     'Somewhat imparryssive...',
     'Parretty good...',
@@ -387,29 +339,27 @@ function determineRoundRating(enoa) {
     'Extraordinparry!',
     'Legendparry!',
   ];
-  const max = enoa * 100;
   for (let i = 1; i <= grades.length; i++) {
-    if (roundScore <= max * (i / grades.length)) return grades[i - 1];
+    if (rndScr <= numAttacks * 100 * (i / grades.length)) return grades[i - 1];
   }
 }
 
-function changeToGameState() {
-  parriedCount = 0;
-  roundScore = 0;
-  pushedSwords = 0;
-  activeSwords.length = 0;
-  activeSwords.push(ps);
+function goGame() {
+  rndScr = 0;
+  numEs = 0;
+  actSw.length = 0;
+  actSw.push(ps);
   info.style.display = 'none';
   gameState = true;
-  requestId = requestAnimationFrame(gameLoop);
+  reqId = requestAnimationFrame(gameLoop);
 }
 
 go.onclick = () => {
-  if (gameState < ENEMIES.length - 1) changeToGameState();
+  if (gameState < ENEMIES.length - 1) goGame();
 };
 
 goSound.onclick = () => {
-  changeToGameState();
+  goGame();
   zzfxX = new AudioContext();
   hasSound = true;
 };
@@ -419,85 +369,65 @@ goSound.onclick = () => {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function peasant() {
-  if (pushedSwords < 5) {
-    pushSword(250, 100, 600, 100, 400, chooseRandomly(0, 90));
-  } else if (pushedSwords < 10) {
-    pushSword(100, 100, 600, 100, 400, getRandomInt(0, 359));
+  if (numEs < 5) {
+    pshSw(250, 100, 600, 100, 400, Math.random() > 0.5 ? 0 : 90);
+  } else if (numEs < 10) {
+    pshSw(100, 100, 600, 100, 400, ranInt(0, 359));
   } else {
-    transitionToNextStage(375);
+    goNext(375);
   }
 }
 
-function barbarian() {
-  const msDelay = 50;
-  const barbarianX = (pushedSwords % 4) * 150 + 100;
-  if (pushedSwords < 4) {
-    pushSword(msDelay, barbarianX, barbarianX, 100, 100, 90);
-  } else if (pushedSwords < 8) {
-    pushSword(msDelay, barbarianX, barbarianX, 225, 225, 0);
-  } else if (pushedSwords < 12) {
-    pushSword(msDelay, barbarianX, barbarianX, 350, 350, 90);
-  } else if (pushedSwords < 16) {
-    pushSword(msDelay, barbarianX, barbarianX, 475, 475, 0);
+function bpal() {
+  const b = enemyState == 1 ? 1 : 0;
+  const x = (numEs % 4) * 150 + 100;
+  let angle = b ? 90 : ranInt(0, 359);
+  if (numEs < 16) {
+    if (numEs < 4) y = 110;
+    else if (numEs < 8) {
+      y = 220;
+      angle = b ? 0 : angle;
+    } else if (numEs < 12) y = 330;
+    else if (numEs < 16) {
+      y = 440;
+      angle = b ? 0 : ranInt(-100, 100);
+    }
+    pshSw(50, x, x, y, y, angle);
   } else {
-    transitionToNextStage(400);
-  }
-}
-
-function paladin() {
-  const msDelay = 50;
-  const barbarianX = (pushedSwords % 4) * 150 + 100;
-  if (pushedSwords < 4) {
-    pushSword(msDelay, barbarianX, barbarianX, 110, 110, getRandomInt(0, 359));
-  } else if (pushedSwords < 8) {
-    pushSword(msDelay, barbarianX, barbarianX, 220, 220, getRandomInt(0, 359));
-  } else if (pushedSwords < 12) {
-    pushSword(msDelay, barbarianX, barbarianX, 330, 330, getRandomInt(0, 359));
-  } else if (pushedSwords < 16) {
-    pushSword(
-      msDelay,
-      barbarianX,
-      barbarianX,
-      440,
-      440,
-      getRandomInt(-100, 100)
-    );
-  } else {
-    transitionToNextStage();
+    goNext();
   }
 }
 
 function duelist() {
-  const msDelay = 50;
-  const duelistY = [100, 225, 350, 475];
-  let duelistX;
+  const y = [100, 225, 350, 475];
+  let x;
 
-  if (pushedSwords < 16) {
-    if (pushedSwords < 4) {
-      duelistX = 150;
-    } else if (pushedSwords < 8) {
-      duelistX = 600;
-    } else if (pushedSwords < 12) {
-      duelistX = 300;
-    } else if (pushedSwords < 16) {
-      duelistX = 500;
+  if (numEs < 16) {
+    if (numEs < 4) {
+      x = 150;
+    } else if (numEs < 8) {
+      x = 600;
+    } else if (numEs < 12) {
+      x = 300;
+    } else if (numEs < 16) {
+      x = 500;
     }
-    pushSword(
-      msDelay,
-      pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
-      pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
-      duelistY[pushedSwords % 4],
-      duelistY[pushedSwords % 4],
-      pushedSwords % 2 === 0 ? -45 : 45
+    pshSw(
+      50,
+      numEs % 2 === 0 ? x : x - 45,
+      numEs % 2 === 0 ? x : x - 45,
+      y[numEs % 4],
+      y[numEs % 4],
+      numEs % 2 === 0 ? -45 : 45
     );
   } else {
-    transitionToNextStage(700);
+    goNext(700);
   }
 }
 
-let lastComboIndex;
+let lastCI; // last combo index
 function archer() {
-  const combos = [
+  const cs = [ // combos
     {
       x: 25,
       y: 100,
@@ -519,128 +449,105 @@ function archer() {
       a: 45,
     },
   ];
-  let combo, randomIndex;
-  if (pushedSwords < 10) {
+  let c, r;
+  if (numEs < 10) {
     if (tick % 75 === 0) {
-      randomIndex = getRandomInt(0, 3);
-      if (randomIndex === lastComboIndex) {
-        if (lastComboIndex === combos.length - 1) {
-          randomIndex = 0;
+      r = ranInt(0, 3);
+      if (r === lastCI) {
+        if (lastCI === cs.length - 1) {
+          r = 0;
         } else {
-          randomIndex = lastComboIndex + 1;
+          r = lastCI + 1;
         }
       }
-      combo = combos[randomIndex];
-      lastComboIndex = randomIndex;
-      pushSword(1, combo.x, combo.x, combo.y, combo.y, combo.a);
+      c = cs[r];
+      lastCI = r;
+      pshSw(1, c.x, c.x, c.y, c.y, c.a);
     }
-  } else if (pushedSwords < 26) {
+  } else if (numEs < 26) {
     if (tick % 150 === 0) {
-      let r1 = getRandomInt(0, 3);
-      let r2 = getRandomInt(0, 3);
+      let r1 = ranInt(0, 3);
+      let r2 = ranInt(0, 3);
       while (r1 === r2) {
-        r2 = getRandomInt(0, 3);
+        r2 = ranInt(0, 3);
       }
-      pushSword(
-        1,
-        combos[r1].x,
-        combos[r1].x,
-        combos[r1].y,
-        combos[r1].y,
-        combos[r1].a,
-        125
-      );
-      pushSword(
-        1,
-        combos[r2].x,
-        combos[r2].x,
-        combos[r2].y,
-        combos[r2].y,
-        combos[r2].a,
-        125,
-        false
-      );
+      pshSw(1, cs[r1].x, cs[r1].x, cs[r1].y, cs[r1].y, cs[r1].a, 125);
+      pshSw(1, cs[r2].x, cs[r2].x, cs[r2].y, cs[r2].y, cs[r2].a, 125, false);
     }
   } else {
-    transitionToNextStage(666);
+    goNext(666);
   }
 }
 
 function dualWielder() {
-  if (pushedSwords < 32) {
-    const x1 = getRandomInt(75, 600);
-    const y1 = getRandomInt(100, 475);
-    const combos = [
-      { angle: 0, x2a: 30, y2a: 0 },
+  if (numEs < 32) {
+    const x1 = ranInt(75, 600);
+    const y1 = ranInt(100, 475);
+    const cs = [
+      { a: 0, x2a: 30, y2a: 0 },
       {
-        angle: 90,
+        a: 90,
         x2a: 0,
         y2a: -30,
       },
       {
-        angle: 45,
+        a: 45,
         x2a: 20,
         y2a: 20,
       },
     ];
-    const index = Math.floor(Math.random() * combos.length);
-    let x2 = x1 + combos[index].x2a;
-    let y2 = y1 + combos[index].y2a;
-    pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
-    pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
+    const i = Math.floor(Math.random() * cs.length);
+    let x2 = x1 + cs[i].x2a;
+    let y2 = y1 + cs[i].y2a;
+    pshSw(75, x1, x1, y1, y1, cs[i].a, 37);
+    pshSw(75, x2, x2, y2, y2, cs[i].a, 37, false);
   } else {
-    transitionToNextStage(400);
+    goNext(400);
   }
 }
 
-function transitionToNextStage(delay = 200) {
+function goNext(delay = 200) {
   if (tick % delay === 0) {
-    changeToInfoState();
+    goInfo();
   }
 }
 
 const ENEMIES = [
   {
     name: 'Peasant',
-    description: '"Slow but unpredictable."',
     button: 'Start (without sound)',
     fx: peasant,
-    numberOfAttacks: 10,
+    numAtt: 10,
   },
   {
     name: 'Barbarian',
-    description: '"Quick but predictable."',
     button: "I'm barbarian to it",
-    fx: barbarian,
-    numberOfAttacks: 16,
+    fx: bpal,
+    numAtt: 16,
   },
   {
     name: 'Paladin',
-    description: '"High intelligence barbarian."',
     button: "I'm paladin to it",
-    fx: paladin,
-    numberOfAttacks: 16,
+    fx: bpal,
+    numAtt: 16,
   },
   {
     name: 'Archer',
-    description: '"Long-ranged sniper."',
     button: 'Ready, set, bow',
     fx: archer,
-    numberOfAttacks: 26,
+    numAtt: 26,
   },
   {
     name: 'Duelist',
-    description: '"Skilled and precise."',
     button: "Let's duel it",
     fx: duelist,
-    numberOfAttacks: 16,
+    numAtt: 16,
   },
   {
     name: 'Dual Wielder',
-    description: '"High-speed assassin."',
     button: "Let's dual it",
     fx: dualWielder,
-    numberOfAttacks: 32,
+    numAtt: 32,
   },
 ];
 
@@ -648,7 +555,7 @@ const ENEMIES = [
 // Enemy Utils //
 ////////////////
 
-function pushSword(
+function pshSw(
   msDelay,
   x1,
   x2,
@@ -656,16 +563,15 @@ function pushSword(
   y2,
   angle,
   sliceTime = 75,
-  shouldPlaySound = true
+  wantSound = true
 ) {
   if (tick % msDelay === 0) {
     const newEs = new EnemySword();
-    const location = getRandomConstrainedLocation(x1, x2, y1, y2);
-    newEs.position = location;
-    newEs.rotationAngle = angle;
-    newEs.timeUntilSliced = sliceTime;
-    activeSwords.push(newEs);
-    if (hasSound && shouldPlaySound) {
+    newEs.pos = getRanLoc(x1, x2, y1, y2);
+    newEs.ra = angle;
+    newEs.tus = sliceTime;
+    actSw.push(newEs);
+    if (hasSound && wantSound) {
       zzfx(
         ...[
           ,
@@ -691,7 +597,7 @@ function pushSword(
         ]
       ); // Hit 110
     }
-    pushedSwords++;
+    numEs++;
   }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -699,22 +605,22 @@ function pushSword(
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // NOTE: Major credit to Qixotl LFC: https://www.youtube.com/watch?v=MvlhMEE9zuc
 // Also Pikuma: https://www.youtube.com/watch?v=-EsWKT7Doww&t=1686s
-function rotatedCoordinatesHelper(
-  centerX,
-  centerY,
-  vertexX,
-  vertexY,
-  rotatedAngle
+function rch( //rotatedCoordinatesHelper
+  cx, //center
+  cy,
+  vx, //vertex
+  vy,
+  ra
 ) {
   //Convert rotated angle into radians
-  rotatedAngle = (rotatedAngle * Math.PI) / 180;
-  let dx = vertexX - centerX;
-  let dy = vertexY - centerY;
-  let distance = Math.sqrt(dx * dx + dy * dy);
-  let originalAngle = Math.atan2(dy, dx);
+  ra = (ra * Math.PI) / 180;
+  let dx = vx - cx;
+  let dy = vy - cy;
+  let dist = Math.sqrt(dx * dx + dy * dy);
+  let ogAng = Math.atan2(dy, dx);
 
-  let rotatedX = centerX + distance * Math.cos(originalAngle + rotatedAngle);
-  let rotatedY = centerY + distance * Math.sin(originalAngle + rotatedAngle);
+  let rotatedX = cx + dist * Math.cos(ogAng + ra);
+  let rotatedY = cy + dist * Math.sin(ogAng + ra);
 
   return {
     x: rotatedX,
@@ -723,42 +629,18 @@ function rotatedCoordinatesHelper(
 }
 
 //Get the rotated coordinates for the sword
-function getRotatedCoordinates(sword) {
-  let centerX = sword.position.x + sword.width / 2;
-  let centerY = sword.position.y + sword.height;
-  let topLeft = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.position.x,
-    sword.position.y,
-    sword.rotationAngle
-  );
-  let topRight = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.position.x + sword.width,
-    sword.position.y,
-    sword.rotationAngle
-  );
-  let bottomLeft = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.position.x,
-    sword.position.y + sword.height,
-    sword.rotationAngle
-  );
-  let bottomRight = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.position.x + sword.width / 2,
-    sword.position.y + sword.height,
-    sword.rotationAngle
-  );
+function getRc(sw) {
+  let cx = sw.pos.x + sw.width / 2;
+  let cy = sw.pos.y + sw.height;
+  let tL = rch(cx, cy, sw.pos.x, sw.pos.y, sw.ra);
+  let tR = rch(cx, cy, sw.pos.x + sw.width, sw.pos.y, sw.ra);
+  let bL = rch(cx, cy, sw.pos.x, sw.pos.y + sw.height, sw.ra);
+  let bR = rch(cx, cy, sw.pos.x + sw.width / 2, sw.pos.y + sw.height, sw.ra);
   return {
-    topLeft: topLeft,
-    topRight: topRight,
-    bottomLeft: bottomLeft,
-    bottomRight: bottomRight,
+    tL: tL, //topLeft
+    tR: tR, //topRight
+    bL: bL, //bottomLeft
+    bR: bR, //bottomRight
   };
 }
 
@@ -775,27 +657,27 @@ function polygon(vertices, edges) {
 }
 
 // This is applying the Separate Axis Theorem
-function isColliding(polygonA, polygonB) {
-  let perpendicularLine = null;
+function isCol(polygonA, polygonB) {
+  let perpLine = null; //perpendicularLine
   // https://en.wikipedia.org/wiki/Dot_product
   let dot = 0;
-  let perpendicularStack = [];
+  let perpStack = [];
   let amin = null;
   let amax = null;
   let bmin = null;
   let bmax = null;
   //Get all perpendicular vectors on each edge for polygonA
   for (let i = 0; i < polygonA.edge.length; i++) {
-    perpendicularLine = new xy(-polygonA.edge[i].y, polygonA.edge[i].x);
-    perpendicularStack.push(perpendicularLine);
+    perpLine = new xy(-polygonA.edge[i].y, polygonA.edge[i].x);
+    perpStack.push(perpLine);
   }
   //Get all perpendicular vectors on each edge for polygonB
   for (let i = 0; i < polygonB.edge.length; i++) {
-    perpendicularLine = new xy(-polygonB.edge[i].y, polygonB.edge[i].x);
-    perpendicularStack.push(perpendicularLine);
+    perpLine = new xy(-polygonB.edge[i].y, polygonB.edge[i].x);
+    perpStack.push(perpLine);
   }
   //Loop through each perpendicular vector for both polygons
-  for (let i = 0; i < perpendicularStack.length; i++) {
+  for (let i = 0; i < perpStack.length; i++) {
     //These dot products will return different values each time
     amin = null;
     amax = null;
@@ -804,8 +686,8 @@ function isColliding(polygonA, polygonB) {
     // Work out all of the dot products for all of the vertices in PolygonA against the perpendicular vector that is currently being looped through
     for (let j = 0; j < polygonA.vertex.length; j++) {
       dot =
-        polygonA.vertex[j].x * perpendicularStack[i].x +
-        polygonA.vertex[j].y * perpendicularStack[i].y;
+        polygonA.vertex[j].x * perpStack[i].x +
+        polygonA.vertex[j].y * perpStack[i].y;
       //Then find the dot products with the highest and lowest values from polygonA.
       if (amax === null || dot > amax) {
         amax = dot;
@@ -817,8 +699,8 @@ function isColliding(polygonA, polygonB) {
     // Work out all of the dot products for all of the vertices in PolygonB against the perpendicular vector that is currently being looped through
     for (let j = 0; j < polygonB.vertex.length; j++) {
       dot =
-        polygonB.vertex[j].x * perpendicularStack[i].x +
-        polygonB.vertex[j].y * perpendicularStack[i].y;
+        polygonB.vertex[j].x * perpStack[i].x +
+        polygonB.vertex[j].y * perpStack[i].y;
       //Then find the dot products with the highest and lowest values from polygonB.
       if (bmax === null || dot > bmax) {
         bmax = dot;
@@ -842,94 +724,63 @@ function isColliding(polygonA, polygonB) {
 
 // NOTE: Should adjust this to include all 5 vertices. But it's fine as-is
 //Detect for a collision between the 2 rectangles
-function detectRectangleCollision(index) {
+function detectCol(index) {
   if (index === 0) return;
-  const thisSword = activeSwords[index];
-  if (thisSword.slicing) return;
-  const playerSword = activeSwords[0];
+  const ts = actSw[index]; //thisSword
+  if (ts.slicing) return;
+  const plyS = actSw[0]; //playerSword
   //Get rotated coordinates for both rectangles
-  let thisSwordRotatedXY = getRotatedCoordinates(thisSword);
-  let playerSwordRotatedXY = getRotatedCoordinates(playerSword);
+  let tsrxy = getRc(ts); //thisSwordRotatedXY
+  let psrxy = getRc(plyS); //playerSwordRotatedXY
   //Vertices & Edges are listed in clockwise order. Starting from the top right
   let thisSwordVertices = [
-    new xy(thisSwordRotatedXY.topRight.x, thisSwordRotatedXY.topRight.y),
-    new xy(thisSwordRotatedXY.bottomRight.x, thisSwordRotatedXY.bottomRight.y),
-    new xy(thisSwordRotatedXY.bottomLeft.x, thisSwordRotatedXY.bottomLeft.y),
-    new xy(thisSwordRotatedXY.topLeft.x, thisSwordRotatedXY.topLeft.y),
+    new xy(tsrxy.tR.x, tsrxy.tR.y),
+    new xy(tsrxy.bR.x, tsrxy.bR.y),
+    new xy(tsrxy.bL.x, tsrxy.bL.y),
+    new xy(tsrxy.tL.x, tsrxy.tL.y),
   ];
   let thisSwordEdges = [
-    new xy(
-      thisSwordRotatedXY.bottomRight.x - thisSwordRotatedXY.topRight.x,
-      thisSwordRotatedXY.bottomRight.y - thisSwordRotatedXY.topRight.y
-    ),
-    new xy(
-      thisSwordRotatedXY.bottomLeft.x - thisSwordRotatedXY.bottomRight.x,
-      thisSwordRotatedXY.bottomLeft.y - thisSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      thisSwordRotatedXY.topLeft.x - thisSwordRotatedXY.bottomLeft.x,
-      thisSwordRotatedXY.topLeft.y - thisSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(
-      thisSwordRotatedXY.topRight.x - thisSwordRotatedXY.topLeft.x,
-      thisSwordRotatedXY.topRight.y - thisSwordRotatedXY.topLeft.y
-    ),
+    new xy(tsrxy.bR.x - tsrxy.tR.x, tsrxy.bR.y - tsrxy.tR.y),
+    new xy(tsrxy.bL.x - tsrxy.bR.x, tsrxy.bL.y - tsrxy.bR.y),
+    new xy(tsrxy.tL.x - tsrxy.bL.x, tsrxy.tL.y - tsrxy.bL.y),
+    new xy(tsrxy.tR.x - tsrxy.tL.x, tsrxy.tR.y - tsrxy.tL.y),
   ];
   let playerSwordVertices = [
-    new xy(playerSwordRotatedXY.topRight.x, playerSwordRotatedXY.topRight.y),
-    new xy(
-      playerSwordRotatedXY.bottomRight.x,
-      playerSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.bottomLeft.x,
-      playerSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(playerSwordRotatedXY.topLeft.x, playerSwordRotatedXY.topLeft.y),
+    new xy(psrxy.tR.x, psrxy.tR.y),
+    new xy(psrxy.bR.x, psrxy.bR.y),
+    new xy(psrxy.bL.x, psrxy.bL.y),
+    new xy(psrxy.tL.x, psrxy.tL.y),
   ];
   let playerSwordEdges = [
-    new xy(
-      playerSwordRotatedXY.bottomRight.x - playerSwordRotatedXY.topRight.x,
-      playerSwordRotatedXY.bottomRight.y - playerSwordRotatedXY.topRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.bottomLeft.x - playerSwordRotatedXY.bottomRight.x,
-      playerSwordRotatedXY.bottomLeft.y - playerSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.topLeft.x - playerSwordRotatedXY.bottomLeft.x,
-      playerSwordRotatedXY.topLeft.y - playerSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(
-      playerSwordRotatedXY.topRight.x - playerSwordRotatedXY.topLeft.x,
-      playerSwordRotatedXY.topRight.y - playerSwordRotatedXY.topLeft.y
-    ),
+    new xy(psrxy.bR.x - psrxy.tR.x, psrxy.bR.y - psrxy.tR.y),
+    new xy(psrxy.bL.x - psrxy.bR.x, psrxy.bL.y - psrxy.bR.y),
+    new xy(psrxy.tL.x - psrxy.bL.x, psrxy.tL.y - psrxy.bL.y),
+    new xy(psrxy.tR.x - psrxy.tL.x, psrxy.tR.y - psrxy.tL.y),
   ];
-  let thisRectPolygon = new polygon(thisSwordVertices, thisSwordEdges);
-  let otherRectPolygon = new polygon(playerSwordVertices, playerSwordEdges);
 
-  if (isColliding(thisRectPolygon, otherRectPolygon)) {
-    thisSword.isColliding = true;
-    playerSword.isColliding = true;
-    playerSword.timeSpentColliding = thisSword.timeSpentColliding;
-
-    // thisSword.color = thisSword.collidingColor;
+  if (
+    isCol(
+      new polygon(thisSwordVertices, thisSwordEdges),
+      new polygon(playerSwordVertices, playerSwordEdges)
+    )
+  ) {
+    ts.isCol = true;
+    plyS.isCol = true;
+    plyS.tsCol = ts.tsCol;
   } else {
-    thisSword.isColliding = false;
-    playerSword.isColliding = false;
-    thisSword.color = thisSword.defaultColor;
-
-    //Below covers the case of two swords with rotationAngle 0
-    if (thisSword.rotationAngle === 0 && playerSword.rotationAngle === 0) {
+    ts.isCol = false;
+    plyS.isCol = false;
+    //Below covers the case of two swords with ra 0
+    if (ts.ra === 0 && plyS.ra === 0) {
       if (
         !(
-          thisSword.position.x > playerSword.position.x + playerSword.width ||
-          thisSword.position.x + thisSword.width < playerSword.position.x ||
-          thisSword.position.y > playerSword.position.y + playerSword.height ||
-          thisSword.position.y + thisSword.height < playerSword.position.y
+          ts.pos.x > plyS.pos.x + plyS.width ||
+          ts.pos.x + ts.width < plyS.pos.x ||
+          ts.pos.y > plyS.pos.y + plyS.height ||
+          ts.pos.y + ts.height < plyS.pos.y
         )
       ) {
-        thisSword.color = red;
+        ts.color = red;
       }
     }
   }
@@ -938,13 +789,13 @@ function detectRectangleCollision(index) {
 //                                              Utils                                               //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * Retrieves the position of an element relative to the canvas.
- * For more information, see here and search for "getPosition": https://www.kirupa.com/canvas/follow_mouse_cursor.htm
+ * Retrieves the pos of an element relative to the cvs.
+ * For more information, see here and search for "getPosition": https://www.kirupa.com/cvs/follow_mouse_cursor.htm
  *
- * @param {HTMLElement} element - The element for which to calculate the position.
- * @returns {{x: number, y: number}} The x and y coordinates of the element relative to the canvas.
+ * @param {HTMLElement} element - The element for which to calculate the pos.
+ * @returns {{x: number, y: number}} The x and y coordinates of the element relative to the cvs.
  */
-function getPositionRelativeToCanvas(element) {
+ function gprtc(element) { // get position relative to canvas
   let xPosition = 0;
   let yPosition = 0;
 
@@ -960,15 +811,15 @@ function getPositionRelativeToCanvas(element) {
 }
 
 /**
- * Move sword with mouse, taking into account position of canvas in window (canvasPosition)
+ * Move sword with mouse, taking into account pos of cvs in window (cvsPos)
  */
-function setMousePositionForPlayerSword(e) {
-  mouseX = e.clientX - canvasPosition.x;
-  mouseY = e.clientY - canvasPosition.y;
-  ps.position.x = mouseX;
-  ps.position.y = mouseY;
+function setPos(e) {
+  mouseX = e.clientX - cvsPos.x;
+  mouseY = e.clientY - cvsPos.y;
+  ps.pos.x = mouseX;
+  ps.pos.y = mouseY;
 }
-canvas.addEventListener('mousemove', setMousePositionForPlayerSword);
+cvs.addEventListener('mousemove', setPos);
 
 /**
  * Generates a random integer within the specified range.
@@ -977,39 +828,29 @@ canvas.addEventListener('mousemove', setMousePositionForPlayerSword);
  * @param {number} max - The maximum value of the range (inclusive).
  * @returns {number} A random integer within the specified range.
  */
-function getRandomInt(min, max) {
+function ranInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function chooseRandomly(option1, option2) {
-  return Math.random() > 0.5 ? option1 : option2;
-}
-
-function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
+function getRanLoc(xMin, xMax, yMin, yMax) {
   const randomX = Math.random() * (xMax - xMin + 1) + xMin;
   const randomY = Math.random() * (yMax - yMin + 1) + yMin;
   return { x: randomX, y: randomY };
 }
 
-/**
- * Takes two angles and returns the difference in angle and the score
- * @param {number} angle1
- * @param {number} angle2
- * @returns [angleDifference, score]
- */
-function calculatePoints(angle1, angle2) {
+function calcPts(angle1, angle2) { //calculate points 
   // Calculate the absolute angle difference modulo 180 degrees
   const angleDifference = Math.abs(
     ((((angle1 - angle2 + 180) % 360) + 360) % 360) - 180
   );
   const points = Math.round(100 - (Math.abs(90 - angleDifference) / 90) * 100);
   // Ensure points are within the range of 0 to 100
-  return [angleDifference, Math.max(0, Math.min(100, points))];
+  return Math.max(0, Math.min(100, points));
 }
 
 /**
  * Takes a number and boolean (true +, false -).
- * Updates score, roundScore, and HTML accordingly.
+ * Updates score, rndScr, and HTML accordingly.
  *
  * @param {number} newPoints
  * @param {boolean} isPositive
@@ -1017,12 +858,12 @@ function calculatePoints(angle1, angle2) {
 function changeScore(newPoints, isPositive) {
   if (isPositive) {
     score += newPoints;
-    roundScore += newPoints;
+    rndScr += newPoints;
   } else {
     score -= newPoints;
-    roundScore -= newPoints;
+    rndScr -= newPoints;
   }
-  totalScore.textContent = score;
+  document.getElementById('score').textContent = score;
 }
 
 // ZzFXMicro - Zuper Zmall Zound Zynth - v1.2.0 by Frank Force ~ 880 bytes
@@ -1121,30 +962,29 @@ zzfx = // play sound
 //                                         Game Loop Stuff                                          //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const activeSwords = [ps];
+const actSw = [ps]; // activeSwords
 
-activeSwords.forEach((sword, index) => {
-  detectRectangleCollision(index);
+actSw.forEach((sword, index) => {
+  detectCol(index);
 });
 
-let requestId;
+let reqId;
 
 function gameLoop() {
   if (!gameState) return;
   tick++;
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  ps.checkSwordRotation();
-  ps.determineTimeSpentColliding();
-  activeSwords.forEach((sword, index) => {
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+  ps.csr();
+  ps.dTSCol();
+  actSw.forEach((sword, index) => {
     if (index === 0 || sword.parried || sword.sliced) return;
-    detectRectangleCollision(index);
-    sword.drawRotation();
+    detectCol(index);
+    sword.drawRot();
     sword.handleParry();
     sword.handleSlice();
   });
-  // NOTE: You can also run a single enemy here. Like peasant(); or barbarian();
   ENEMIES[enemyState].fx();
-  requestId = requestAnimationFrame(gameLoop);
+  reqId = requestAnimationFrame(gameLoop);
 }
 
-changeToInfoState();
+goInfo();
