@@ -12,8 +12,12 @@ body {
 
 h1 {
   font-family: fantasy;
-  margin: 10px 0 0 0;
   text-align: center;
+}
+
+h1,
+h3 {
+  margin: 10px 0 0 0;
 }
 
 span {
@@ -50,15 +54,22 @@ button {
   border-bottom: 1px solid var(--f);
 }
 
-#scoreBoard {
-  font-size: 24px;
-  text-align: center;
+#round-info,
+#enemy-info,
+#last-info {
+  display: flex;
+  flex-direction: column;
+  height: 50%;
+  justify-content: center;
 }
 
 #last-info {
   display: none;
-  flex-direction: column;
-  justify-content: space-around;
+}
+
+#scoreBoard {
+  font-size: 24px;
+  text-align: center;
 }
 
 #high-score {

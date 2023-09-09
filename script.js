@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      cvs and Global Stuff                                     //
+//                                      Canvas and Global Stuff                                     //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const cvs = document.getElementById('cvs');
 const ctx = cvs.getContext('2d');
@@ -14,20 +14,16 @@ const gry = '#6a6a6a';
 // Refers to frame of gameLoop. Used for some timing stuff
 let tick = 0;
 let score = 0;
-let rndScr = 0;
-let isColNow = false;
-let parriedCount = 0;
-// HTML stuff
+let rndScr = 0; //roundScore
+let isColNow = false; //isCollidingNow
+
+const timeUntilParried = 33;
+let hasSound = false;
 const info = document.getElementById('info');
-// Start buttons
 const go = document.getElementById('go');
 const goSound = document.getElementById('go-sound');
-// Results Info
 const roundInfo = document.getElementById('round-info');
 
-//
-const timeUntilParried = 3003;
-let hasSound = false;
 const lastHighScore = localStorage.getItem('parryHighScore') || 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,7 +237,6 @@ class EnemySword extends Sword {
       const addedScore = calculatePoints(this.ra, ps.ra);
       changeScore(addedScore, true);
       this.parried = true;
-      parriedCount++;
       isColNow = false;
       if (hasSound) {
         zzfx(
@@ -291,7 +286,7 @@ let numEs = 0;
 function goInfo() {
   if (enemyState > -1) goSound.style.display = 'none';
 
-  roundInfo.style.display = 'block';
+  roundInfo.style.display = 'flex';
   handleInfoChange();
 }
 
@@ -357,7 +352,6 @@ function determineRoundRating(numAttacks) {
 }
 
 function changeToGameState() {
-  parriedCount = 0;
   rndScr = 0;
   numEs = 0;
   actSw.length = 0;
@@ -619,22 +613,22 @@ function pshSw(
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // NOTE: Major credit to Qixotl LFC: https://www.youtube.com/watch?v=MvlhMEE9zuc
 // Also Pikuma: https://www.youtube.com/watch?v=-EsWKT7Doww&t=1686s
-function rotatedCoordinatesHelper(
-  centerX,
-  centerY,
-  vertexX,
-  vertexY,
-  rotatedAngle
+function rch( //rotatedCoordinatesHelper
+  cx, //center
+  cy,
+  vx, //vertex
+  vy,
+  ra
 ) {
   //Convert rotated angle into radians
-  rotatedAngle = (rotatedAngle * Math.PI) / 180;
-  let dx = vertexX - centerX;
-  let dy = vertexY - centerY;
-  let distance = Math.sqrt(dx * dx + dy * dy);
-  let originalAngle = Math.atan2(dy, dx);
+  ra = (ra * Math.PI) / 180;
+  let dx = vx - cx;
+  let dy = vy - cy;
+  let dist = Math.sqrt(dx * dx + dy * dy);
+  let ogAng = Math.atan2(dy, dx);
 
-  let rotatedX = centerX + distance * Math.cos(originalAngle + rotatedAngle);
-  let rotatedY = centerY + distance * Math.sin(originalAngle + rotatedAngle);
+  let rotatedX = cx + dist * Math.cos(ogAng + ra);
+  let rotatedY = cy + dist * Math.sin(ogAng + ra);
 
   return {
     x: rotatedX,
@@ -643,42 +637,18 @@ function rotatedCoordinatesHelper(
 }
 
 //Get the rotated coordinates for the sword
-function getRotatedCoordinates(sword) {
-  let centerX = sword.pos.x + sword.width / 2;
-  let centerY = sword.pos.y + sword.height;
-  let topLeft = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.pos.x,
-    sword.pos.y,
-    sword.ra
-  );
-  let topRight = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.pos.x + sword.width,
-    sword.pos.y,
-    sword.ra
-  );
-  let bottomLeft = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.pos.x,
-    sword.pos.y + sword.height,
-    sword.ra
-  );
-  let bottomRight = rotatedCoordinatesHelper(
-    centerX,
-    centerY,
-    sword.pos.x + sword.width / 2,
-    sword.pos.y + sword.height,
-    sword.ra
-  );
+function getRc(sw) {
+  let cx = sw.pos.x + sw.width / 2;
+  let cy = sw.pos.y + sw.height;
+  let tL = rch(cx, cy, sw.pos.x, sw.pos.y, sw.ra);
+  let tR = rch(cx, cy, sw.pos.x + sw.width, sw.pos.y, sw.ra);
+  let bL = rch(cx, cy, sw.pos.x, sw.pos.y + sw.height, sw.ra);
+  let bR = rch(cx, cy, sw.pos.x + sw.width / 2, sw.pos.y + sw.height, sw.ra);
   return {
-    topLeft: topLeft,
-    topRight: topRight,
-    bottomLeft: bottomLeft,
-    bottomRight: bottomRight,
+    tL: tL, //topLeft
+    tR: tR, //topRight
+    bL: bL, //bottomLeft
+    bR: bR, //bottomRight
   };
 }
 
@@ -696,26 +666,26 @@ function polygon(vertices, edges) {
 
 // This is applying the Separate Axis Theorem
 function isCol(polygonA, polygonB) {
-  let perpendicularLine = null;
+  let perpLine = null; //perpendicularLine
   // https://en.wikipedia.org/wiki/Dot_product
   let dot = 0;
-  let perpendicularStack = [];
+  let perpStack = [];
   let amin = null;
   let amax = null;
   let bmin = null;
   let bmax = null;
   //Get all perpendicular vectors on each edge for polygonA
   for (let i = 0; i < polygonA.edge.length; i++) {
-    perpendicularLine = new xy(-polygonA.edge[i].y, polygonA.edge[i].x);
-    perpendicularStack.push(perpendicularLine);
+    perpLine = new xy(-polygonA.edge[i].y, polygonA.edge[i].x);
+    perpStack.push(perpLine);
   }
   //Get all perpendicular vectors on each edge for polygonB
   for (let i = 0; i < polygonB.edge.length; i++) {
-    perpendicularLine = new xy(-polygonB.edge[i].y, polygonB.edge[i].x);
-    perpendicularStack.push(perpendicularLine);
+    perpLine = new xy(-polygonB.edge[i].y, polygonB.edge[i].x);
+    perpStack.push(perpLine);
   }
   //Loop through each perpendicular vector for both polygons
-  for (let i = 0; i < perpendicularStack.length; i++) {
+  for (let i = 0; i < perpStack.length; i++) {
     //These dot products will return different values each time
     amin = null;
     amax = null;
@@ -724,8 +694,8 @@ function isCol(polygonA, polygonB) {
     // Work out all of the dot products for all of the vertices in PolygonA against the perpendicular vector that is currently being looped through
     for (let j = 0; j < polygonA.vertex.length; j++) {
       dot =
-        polygonA.vertex[j].x * perpendicularStack[i].x +
-        polygonA.vertex[j].y * perpendicularStack[i].y;
+        polygonA.vertex[j].x * perpStack[i].x +
+        polygonA.vertex[j].y * perpStack[i].y;
       //Then find the dot products with the highest and lowest values from polygonA.
       if (amax === null || dot > amax) {
         amax = dot;
@@ -737,8 +707,8 @@ function isCol(polygonA, polygonB) {
     // Work out all of the dot products for all of the vertices in PolygonB against the perpendicular vector that is currently being looped through
     for (let j = 0; j < polygonB.vertex.length; j++) {
       dot =
-        polygonB.vertex[j].x * perpendicularStack[i].x +
-        polygonB.vertex[j].y * perpendicularStack[i].y;
+        polygonB.vertex[j].x * perpStack[i].x +
+        polygonB.vertex[j].y * perpStack[i].y;
       //Then find the dot products with the highest and lowest values from polygonB.
       if (bmax === null || dot > bmax) {
         bmax = dot;
@@ -764,88 +734,61 @@ function isCol(polygonA, polygonB) {
 //Detect for a collision between the 2 rectangles
 function detectRectangleCollision(index) {
   if (index === 0) return;
-  const thisSword = actSw[index];
-  if (thisSword.slicing) return;
-  const playerSword = actSw[0];
+  const ts = actSw[index]; //thisSword
+  if (ts.slicing) return;
+  const plyS = actSw[0]; //playerSword
   //Get rotated coordinates for both rectangles
-  let thisSwordRotatedXY = getRotatedCoordinates(thisSword);
-  let playerSwordRotatedXY = getRotatedCoordinates(playerSword);
+  let tsrxy = getRc(ts); //thisSwordRotatedXY
+  let psrxy = getRc(plyS); //playerSwordRotatedXY
   //Vertices & Edges are listed in clockwise order. Starting from the top right
   let thisSwordVertices = [
-    new xy(thisSwordRotatedXY.topRight.x, thisSwordRotatedXY.topRight.y),
-    new xy(thisSwordRotatedXY.bottomRight.x, thisSwordRotatedXY.bottomRight.y),
-    new xy(thisSwordRotatedXY.bottomLeft.x, thisSwordRotatedXY.bottomLeft.y),
-    new xy(thisSwordRotatedXY.topLeft.x, thisSwordRotatedXY.topLeft.y),
+    new xy(tsrxy.tR.x, tsrxy.tR.y),
+    new xy(tsrxy.bR.x, tsrxy.bR.y),
+    new xy(tsrxy.bL.x, tsrxy.bL.y),
+    new xy(tsrxy.tL.x, tsrxy.tL.y),
   ];
   let thisSwordEdges = [
-    new xy(
-      thisSwordRotatedXY.bottomRight.x - thisSwordRotatedXY.topRight.x,
-      thisSwordRotatedXY.bottomRight.y - thisSwordRotatedXY.topRight.y
-    ),
-    new xy(
-      thisSwordRotatedXY.bottomLeft.x - thisSwordRotatedXY.bottomRight.x,
-      thisSwordRotatedXY.bottomLeft.y - thisSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      thisSwordRotatedXY.topLeft.x - thisSwordRotatedXY.bottomLeft.x,
-      thisSwordRotatedXY.topLeft.y - thisSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(
-      thisSwordRotatedXY.topRight.x - thisSwordRotatedXY.topLeft.x,
-      thisSwordRotatedXY.topRight.y - thisSwordRotatedXY.topLeft.y
-    ),
+    new xy(tsrxy.bR.x - tsrxy.tR.x, tsrxy.bR.y - tsrxy.tR.y),
+    new xy(tsrxy.bL.x - tsrxy.bR.x, tsrxy.bL.y - tsrxy.bR.y),
+    new xy(tsrxy.tL.x - tsrxy.bL.x, tsrxy.tL.y - tsrxy.bL.y),
+    new xy(tsrxy.tR.x - tsrxy.tL.x, tsrxy.tR.y - tsrxy.tL.y),
   ];
   let playerSwordVertices = [
-    new xy(playerSwordRotatedXY.topRight.x, playerSwordRotatedXY.topRight.y),
-    new xy(
-      playerSwordRotatedXY.bottomRight.x,
-      playerSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.bottomLeft.x,
-      playerSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(playerSwordRotatedXY.topLeft.x, playerSwordRotatedXY.topLeft.y),
+    new xy(psrxy.tR.x, psrxy.tR.y),
+    new xy(psrxy.bR.x, psrxy.bR.y),
+    new xy(psrxy.bL.x, psrxy.bL.y),
+    new xy(psrxy.tL.x, psrxy.tL.y),
   ];
   let playerSwordEdges = [
-    new xy(
-      playerSwordRotatedXY.bottomRight.x - playerSwordRotatedXY.topRight.x,
-      playerSwordRotatedXY.bottomRight.y - playerSwordRotatedXY.topRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.bottomLeft.x - playerSwordRotatedXY.bottomRight.x,
-      playerSwordRotatedXY.bottomLeft.y - playerSwordRotatedXY.bottomRight.y
-    ),
-    new xy(
-      playerSwordRotatedXY.topLeft.x - playerSwordRotatedXY.bottomLeft.x,
-      playerSwordRotatedXY.topLeft.y - playerSwordRotatedXY.bottomLeft.y
-    ),
-    new xy(
-      playerSwordRotatedXY.topRight.x - playerSwordRotatedXY.topLeft.x,
-      playerSwordRotatedXY.topRight.y - playerSwordRotatedXY.topLeft.y
-    ),
+    new xy(psrxy.bR.x - psrxy.tR.x, psrxy.bR.y - psrxy.tR.y),
+    new xy(psrxy.bL.x - psrxy.bR.x, psrxy.bL.y - psrxy.bR.y),
+    new xy(psrxy.tL.x - psrxy.bL.x, psrxy.tL.y - psrxy.bL.y),
+    new xy(psrxy.tR.x - psrxy.tL.x, psrxy.tR.y - psrxy.tL.y),
   ];
-  let thisRectPolygon = new polygon(thisSwordVertices, thisSwordEdges);
-  let otherRectPolygon = new polygon(playerSwordVertices, playerSwordEdges);
 
-  if (isCol(thisRectPolygon, otherRectPolygon)) {
-    thisSword.isCol = true;
-    playerSword.isCol = true;
-    playerSword.tsCol = thisSword.tsCol;
+  if (
+    isCol(
+      new polygon(thisSwordVertices, thisSwordEdges),
+      new polygon(playerSwordVertices, playerSwordEdges)
+    )
+  ) {
+    ts.isCol = true;
+    plyS.isCol = true;
+    plyS.tsCol = ts.tsCol;
   } else {
-    thisSword.isCol = false;
-    playerSword.isCol = false;
+    ts.isCol = false;
+    plyS.isCol = false;
     //Below covers the case of two swords with ra 0
-    if (thisSword.ra === 0 && playerSword.ra === 0) {
+    if (ts.ra === 0 && plyS.ra === 0) {
       if (
         !(
-          thisSword.pos.x > playerSword.pos.x + playerSword.width ||
-          thisSword.pos.x + thisSword.width < playerSword.pos.x ||
-          thisSword.pos.y > playerSword.pos.y + playerSword.height ||
-          thisSword.pos.y + thisSword.height < playerSword.pos.y
+          ts.pos.x > plyS.pos.x + plyS.width ||
+          ts.pos.x + ts.width < plyS.pos.x ||
+          ts.pos.y > plyS.pos.y + plyS.height ||
+          ts.pos.y + ts.height < plyS.pos.y
         )
       ) {
-        thisSword.color = red;
+        ts.color = red;
       }
     }
   }
