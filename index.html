@@ -23,10 +23,10 @@
         <h3>Welcome!</h3>
         <ul>
           <li>Move your sword with the mouse.</li>
-          <li>Rotate with Q or E.</li>
+          <li>Rotate with Q and E.</li>
           <li>
-            Parry enemy attacks by intersecting the enemy sword for half a
-            second.
+            Parry enemy attacks by intersecting the enemy sword for around half
+            a second.
           </li>
           <li>
             Try to create perpendicular angles between both swords (i.e. make a
@@ -48,7 +48,7 @@
             (<span id="score-percent"></span>%)
           </li>
           <li>
-            <span id="your-parries"></span> enemy strikes parried /
+            <span id="your-parries"></span> parries /
             <span id="total-possible-parries"></span> total enemy strikes <br />
             (<span id="parries-percent"></span>%)
           </li>
@@ -68,6 +68,10 @@
       </div>
       <div id="last-info">
         <h1>Thanks for playing!</h1>
+        <p>
+          High score: <span id="high-score"></span
+          ><span id="new-high-score">New!</span>
+        </p>
         <ul>
           <li>
             <a href="https://github.com/bbaustin/first-person-slicer"
@@ -75,6 +79,11 @@
             >
           </li>
           <li><a href="https://js13kgames.com/">Back to js13kGames</a></li>
+          <li>
+            <a href="javascript:location.reload()"
+              >Play again (reloads page; high score will be saved)</a
+            >
+          </li>
         </ul>
       </div>
     </section>
@@ -86,8 +95,18 @@
       ></canvas>
     </main>
     <div id="scoreBoard">
-      <span>Score:</span>
-      <p id="score">0</p>
+      <div>
+        <span>Score:</span>
+        <p id="score">0</p>
+      </div>
+      <div>
+        <span>Last parry angle:</span>
+        <p id="last-parry-angle">-</p>
+      </div>
+      <div>
+        <span>Last parry score:</span>
+        <p id="last-parry-score">0</p>
+      </div>
     </div>
     <script src="script.js"></script>
   </body>

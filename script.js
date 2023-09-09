@@ -44,6 +44,11 @@ const reload = document.getElementById('reload');
 //
 const timeUntilParried = 33;
 let hasSound = false;
+const lastHighScore = localStorage.getItem('parryHighScore') || 0;
+const newHighScore = document.getElementById('new-high-score');
+const highScore = document.getElementById('high-score');
+const lastParryAngle = document.getElementById('last-parry-angle');
+const lastParryScore = document.getElementById('last-parry-score');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                               Sword                                              //
@@ -229,6 +234,8 @@ class EnemySword extends Sword {
         changeScore(90, false);
         this.slicing = false;
         this.sliced = true;
+        lastParryAngle.textContent = '-';
+        lastParryScore.textContent = -90;
         if (hasSound) {
           zzfx(
             ...[
@@ -261,8 +268,13 @@ class EnemySword extends Sword {
 
   handleParry() {
     if (this.timeSpentColliding >= timeUntilParried) {
-      const addedScore = calculatePoints(this.rotationAngle, ps.rotationAngle);
+      const [angleDifference, addedScore] = calculatePoints(
+        this.rotationAngle,
+        ps.rotationAngle
+      );
       changeScore(addedScore, true);
+      lastParryAngle.textContent = `${angleDifference}°`;
+      lastParryScore.textContent = addedScore;
       this.parried = true;
       parriedCount++;
       activeCollisionHappening = false;
@@ -355,12 +367,21 @@ function handleInfoChange() {
   if (enemyState === ENEMIES.length) {
     lastInfo.style.display = 'flex';
     enemyInfo.style.display = 'none';
+    updateLocalStorage();
   } else {
     enemyInfo.style.display = 'flex';
     nextEnemy.textContent = ENEMIES[enemyState].name;
     nextEnemyDescription.textContent = ENEMIES[enemyState].description;
     go.textContent = ENEMIES[enemyState].button;
   }
+}
+
+function updateLocalStorage() {
+  if (score > lastHighScore) {
+    localStorage.setItem('parryHighScore', score);
+    newHighScore.style.display = 'block';
+  }
+  highScore.textContent = localStorage.getItem('parryHighScore');
 }
 
 function determineRoundRating(enoa) {
@@ -464,7 +485,7 @@ function duelist() {
     if (pushedSwords < 4) {
       duelistX = 150;
     } else if (pushedSwords < 8) {
-      duelistX = 600; // getRandomInt(100, 600);
+      duelistX = 600;
     } else if (pushedSwords < 12) {
       duelistX = 300;
     } else if (pushedSwords < 16) {
@@ -474,12 +495,12 @@ function duelist() {
       msDelay,
       pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
       pushedSwords % 2 === 0 ? duelistX : duelistX - 45,
-      duelistY[pushedSwords % 4], // Adjusted the array index
-      duelistY[pushedSwords % 4], // Adjusted the array index
+      duelistY[pushedSwords % 4],
+      duelistY[pushedSwords % 4],
       pushedSwords % 2 === 0 ? -45 : 45
     );
   } else {
-    transitionToNextStage();
+    transitionToNextStage(700);
   }
 }
 
@@ -550,7 +571,7 @@ function archer() {
       );
     }
   } else {
-    transitionToNextStage(700);
+    transitionToNextStage(666);
   }
 }
 
@@ -581,7 +602,7 @@ function dualWielder() {
     pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
     pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
   } else {
-    transitionToNextStage();
+    transitionToNextStage(400);
   }
 }
 
@@ -610,14 +631,14 @@ const ENEMIES = [
   },
   {
     name: 'Paladin',
-    description: '"Barbarian with higher intelligence stats."',
+    description: '"High intelligence barbarian."',
     button: "I'm paladin to it",
     fx: paladin,
     numberOfAttacks: 16,
   },
   {
     name: 'Archer',
-    description: '"Long-ranged sniper"',
+    description: '"Long-ranged sniper."',
     button: 'Ready, set, bow',
     fx: archer,
     numberOfAttacks: 26,
@@ -631,7 +652,7 @@ const ENEMIES = [
   },
   {
     name: 'Dual Wielder',
-    description: '"High-speed assassin"',
+    description: '"High-speed assassin."',
     button: "Let's dual it",
     fx: dualWielder,
     numberOfAttacks: 32,
@@ -984,6 +1005,12 @@ function getRandomConstrainedLocation(xMin, xMax, yMin, yMax) {
   return { x: randomX, y: randomY };
 }
 
+/**
+ * Takes two angles and returns the difference in angle and the score
+ * @param {number} angle1
+ * @param {number} angle2
+ * @returns [angleDifference, score]
+ */
 function calculatePoints(angle1, angle2) {
   // Calculate the absolute angle difference modulo 180 degrees
   const angleDifference = Math.abs(
@@ -993,7 +1020,7 @@ function calculatePoints(angle1, angle2) {
   const points = Math.round(100 - (Math.abs(90 - angleDifference) / 90) * 100);
 
   // Ensure points are within the range of 0 to 100
-  return Math.max(0, Math.min(100, points));
+  return [angleDifference, Math.max(0, Math.min(100, points))];
 }
 
 /**

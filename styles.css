@@ -1,17 +1,19 @@
 body {
-  font-family: Georgia, serif;
+  --b: blanchedalmond;
+  --f: saddlebrown;
+  align-items: center;
+  background: var(--b);
   display: flex;
   flex-direction: column;
+  font-family: Georgia, serif;
   justify-content: center;
-  align-items: center;
-  background: blanchedalmond;
   line-height: 1.5;
 }
 
 main {
   display: flex;
-  text-align: right;
   gap: 50px;
+  text-align: right;
 }
 
 span {
@@ -27,9 +29,9 @@ li {
 }
 
 h1 {
-  text-align: center;
-  margin: 0;
   font-family: fantasy;
+  margin: 0;
+  text-align: center;
 }
 
 h3 {
@@ -37,9 +39,9 @@ h3 {
 }
 
 button {
-  background: blanchedalmond;
-  padding: 10px 20px;
+  background: var(--b);
   font-family: Georgia, serif;
+  padding: 10px 20px;
 }
 
 #go-sound {
@@ -47,41 +49,44 @@ button {
 }
 
 #arena {
-  width: 700px;
+  border: 1px solid var(--f);
   height: 500px;
-  border: 1px solid saddlebrown;
+  width: 700px;
 }
 
 #canvas {
-  border: 1px solid saddlebrown;
+  border: 1px solid var(--f);
 }
 
 #info {
-  background: blanchedalmond;
-  border: 1px solid saddlebrown;
+  background: var(--b);
+  border: 1px solid var(--f);
   display: flex;
-  justify-content: center;
-  width: 700px;
   height: 500px;
-  top: 56px;
+  justify-content: center;
   position: fixed;
   text-align: center;
+  top: 56px;
+  width: 700px;
 }
 
 #scoreBoard {
-  width: 300px;
-  height: 100px;
-  border: 1px solid saddlebrown;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  margin-top: 30px;
+  border: 1px solid var(--f);
+  display: flex;
   font-size: 24px;
-  flex-direction: column;
+  height: 100px;
+  justify-content: center;
+  margin-top: 30px;
+  width: 700px;
 }
 
 #scoreBoard span {
   font-size: 12px;
+}
+
+#scoreBoard p {
+  font-weight: 700;
 }
 
 #scoreBoard span,
@@ -89,9 +94,23 @@ p {
   margin: 0;
 }
 
+#scoreBoard div {
+  align-items: center;
+  border-right: 1px solid var(--f);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  width: 33%;
+}
+
+#scoreBoard div:last-child {
+  border-right: none;
+}
+
 #last-info,
 #enemy-info {
-  border-left: 1px solid saddlebrown;
+  border-left: 1px solid var(--f);
   display: none;
   flex-direction: column;
   justify-content: space-around;
@@ -103,4 +122,15 @@ p {
 #last-info {
   padding: 30px;
   width: 50%;
+}
+
+#high-score {
+  font-size: 24px;
+}
+
+#new-high-score {
+  color: red;
+  display: none;
+  font-size: 12px;
+  font-weight: 700;
 }
