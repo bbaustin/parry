@@ -1,5 +1,4 @@
 # Parry
-_working title: first-person-slicer_
 
 <img width="953" alt="Screenshot 2023-09-09 at 19 57 51" src="https://github.com/bbaustin/first-person-slicer/assets/18755168/e982f4bc-35f3-4ed4-b354-bba9c0ad2cbe">
 
