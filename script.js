@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 const cvs = document.getElementById('cvs');
 const ctx = cvs.getContext('2d');
-let cvsPos = getPositionRelativeToCanvas(cvs);
+let cvsPos = gprtc(cvs);
 let mouseX = 0;
 let mouseY = 0;
 const blu = '#6a6aff';
@@ -17,7 +17,7 @@ let score = 0;
 let rndScr = 0; //roundScore
 let isColNow = false; //isCollidingNow
 
-const timeUntilParried = 33;
+const tup = 33; // time until parried
 let hasSound = false;
 const info = document.getElementById('info');
 const go = document.getElementById('go');
@@ -62,8 +62,8 @@ class Sword {
     if (this.id < 50) {
       // only for PlayerSword
       if (isColNow) {
-        ctx.fillStyle = this.makeGradient(
-          (this.tsCol * (100 / timeUntilParried)) / 100
+        ctx.fillStyle = this.drawGrad(
+          (this.tsCol * (100 / tup)) / 100
         );
       } else {
         ctx.fillStyle = this.color;
@@ -74,8 +74,8 @@ class Sword {
         this.color = rrr;
       }
       if (!this.sliced) {
-        ctx.fillStyle = this.makeGradient(
-          (this.tsOS * (100 / this.timeUntilSliced)) / 100
+        ctx.fillStyle = this.drawGrad(
+          (this.tsOS * (100 / this.tus)) / 100
         );
       }
     }
@@ -90,7 +90,7 @@ class Sword {
     ctx.fill();
   }
 
-  drawRotation() {
+  drawRot() {
     // Save the ctx state before transformations
     ctx.save();
     // Apply rotation at the calculated center point
@@ -102,7 +102,7 @@ class Sword {
     ctx.restore();
   }
 
-  makeGradient(prog) {
+  drawGrad(prog) {
     let mid = prog > 1.0 ? 1.0 : prog;
     const g = ctx.createLinearGradient(
       this.pos.x - this.width / 2,
@@ -131,21 +131,20 @@ class PlayerSword extends Sword {
     });
   }
 
-  checkSwordRotation() {
+  csr() { //check sword rotation
     // Why 9? The sword can rotate between -90 and 90 degrees.
     // I was moving the sword by 10 degrees, but that felt a bit fast. 5 degrees was a bit too slow. 9 degrees feels alright!
     // This also explains the 81 below (90 - 9 = 81).
-    const angleInDegrees = 9;
-    if (keyStateForPlayerSwordRotation.q && this.ra >= -81) {
-      this.ra -= angleInDegrees;
+    if (ksfpsr.q && this.ra >= -81) {
+      this.ra -= 9;
     }
-    if (keyStateForPlayerSwordRotation.e && this.ra <= 81) {
-      this.ra += angleInDegrees;
+    if (ksfpsr.e && this.ra <= 81) {
+      this.ra += 9;
     }
-    this.drawRotation();
+    this.drawRot();
   }
 
-  determineTSCol() {
+  dTSCol() { //determine this sword collision i think?
     if (this.isCol) {
       this.tsCol++;
     }
@@ -157,7 +156,7 @@ const ps = new PlayerSword();
 /**
  * Used by event listeners directly below.
  */
-let keyStateForPlayerSwordRotation = {
+let ksfpsr = { //keystate for player sword rotation
   q: false,
   e: false,
 };
@@ -167,16 +166,16 @@ let keyStateForPlayerSwordRotation = {
  */
 document.addEventListener('keydown', (event) => {
   if (event.key === 'q') {
-    keyStateForPlayerSwordRotation.q = true;
+    ksfpsr.q = true;
   } else if (event.key === 'e') {
-    keyStateForPlayerSwordRotation.e = true;
+    ksfpsr.e = true;
   }
 });
 document.addEventListener('keyup', (event) => {
   if (event.key === 'q') {
-    keyStateForPlayerSwordRotation.q = false;
+    ksfpsr.q = false;
   } else if (event.key === 'e') {
-    keyStateForPlayerSwordRotation.e = false;
+    ksfpsr.e = false;
   }
 });
 
@@ -184,18 +183,18 @@ document.addEventListener('keyup', (event) => {
 //                                           Enemy Sword                                            //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 class EnemySword extends Sword {
-  constructor(parried = false, slicing = false, timeUntilSliced = 75) {
+  constructor(parried = false, slicing = false, tus = 75) {
     super({
       color: red,
       colCol: gry,
     });
     this.parried = parried;
     this.slicing = slicing;
-    this.timeUntilSliced = timeUntilSliced;
+    this.tus = tus; //time until sliced
   }
 
   handleSlice() {
-    if (this.tsOS >= this.timeUntilSliced) {
+    if (this.tsOS >= this.tus) {
       this.slicing = true;
 
       if (tick % 50 === 0) {
@@ -233,8 +232,8 @@ class EnemySword extends Sword {
   }
 
   handleParry() {
-    if (this.tsCol >= timeUntilParried) {
-      const addedScore = calculatePoints(this.ra, ps.ra);
+    if (this.tsCol >= tup) {
+      const addedScore = calcPts(this.ra, ps.ra);
       changeScore(addedScore, true);
       this.parried = true;
       isColNow = false;
@@ -285,18 +284,8 @@ let numEs = 0;
 
 function goInfo() {
   if (enemyState > -1) goSound.style.display = 'none';
-
   roundInfo.style.display = 'flex';
-  handleInfoChange();
-}
-
-function stopGameLoop() {
-  cancelAnimationFrame(requestId);
-  gameState = false;
-}
-
-function handleInfoChange() {
-  stopGameLoop();
+stopGameLoop();
   // first update score stuff
   if (enemyState > -1) {
     let numAttacks = ENEMIES[enemyState].numAtt;
@@ -322,7 +311,11 @@ function handleInfoChange() {
     document.getElementById('next-enemy').textContent =
       ENEMIES[enemyState].name;
     go.textContent = ENEMIES[enemyState].button;
-  }
+  }}
+
+function stopGameLoop() {
+  cancelAnimationFrame(reqId);
+  gameState = false;
 }
 
 function updateLocalStorage() {
@@ -351,22 +344,22 @@ function determineRoundRating(numAttacks) {
   }
 }
 
-function changeToGameState() {
+function goGame() {
   rndScr = 0;
   numEs = 0;
   actSw.length = 0;
   actSw.push(ps);
   info.style.display = 'none';
   gameState = true;
-  requestId = requestAnimationFrame(gameLoop);
+  reqId = requestAnimationFrame(gameLoop);
 }
 
 go.onclick = () => {
-  if (gameState < ENEMIES.length - 1) changeToGameState();
+  if (gameState < ENEMIES.length - 1) goGame();
 };
 
 goSound.onclick = () => {
-  changeToGameState();
+  goGame();
   zzfxX = new AudioContext();
   hasSound = true;
 };
@@ -386,7 +379,6 @@ function peasant() {
 }
 
 function bpal() {
-  // true is barb. false is paladin.
   const b = enemyState == 1 ? 1 : 0;
   const x = (numEs % 4) * 150 + 100;
   let angle = b ? 90 : ranInt(0, 359);
@@ -398,7 +390,7 @@ function bpal() {
     } else if (numEs < 12) y = 330;
     else if (numEs < 16) {
       y = 440;
-      angle = b ? 90 : ranInt(-100, 100);
+      angle = b ? 0 : ranInt(-100, 100);
     }
     pshSw(50, x, x, y, y, angle);
   } else {
@@ -433,9 +425,9 @@ function duelist() {
   }
 }
 
-let lastCI;
+let lastCI; // last combo index
 function archer() {
-  const cs = [
+  const cs = [ // combos
     {
       x: 25,
       y: 100,
@@ -577,7 +569,7 @@ function pshSw(
     const newEs = new EnemySword();
     newEs.pos = getRanLoc(x1, x2, y1, y2);
     newEs.ra = angle;
-    newEs.timeUntilSliced = sliceTime;
+    newEs.tus = sliceTime;
     actSw.push(newEs);
     if (hasSound && wantSound) {
       zzfx(
@@ -732,7 +724,7 @@ function isCol(polygonA, polygonB) {
 
 // NOTE: Should adjust this to include all 5 vertices. But it's fine as-is
 //Detect for a collision between the 2 rectangles
-function detectRectangleCollision(index) {
+function detectCol(index) {
   if (index === 0) return;
   const ts = actSw[index]; //thisSword
   if (ts.slicing) return;
@@ -803,7 +795,7 @@ function detectRectangleCollision(index) {
  * @param {HTMLElement} element - The element for which to calculate the pos.
  * @returns {{x: number, y: number}} The x and y coordinates of the element relative to the cvs.
  */
-function getPositionRelativeToCanvas(element) {
+ function gprtc(element) { // get position relative to canvas
   let xPosition = 0;
   let yPosition = 0;
 
@@ -821,13 +813,13 @@ function getPositionRelativeToCanvas(element) {
 /**
  * Move sword with mouse, taking into account pos of cvs in window (cvsPos)
  */
-function setMousePositionForPlayerSword(e) {
+function setPos(e) {
   mouseX = e.clientX - cvsPos.x;
   mouseY = e.clientY - cvsPos.y;
   ps.pos.x = mouseX;
   ps.pos.y = mouseY;
 }
-cvs.addEventListener('mousemove', setMousePositionForPlayerSword);
+cvs.addEventListener('mousemove', setPos);
 
 /**
  * Generates a random integer within the specified range.
@@ -846,7 +838,7 @@ function getRanLoc(xMin, xMax, yMin, yMax) {
   return { x: randomX, y: randomY };
 }
 
-function calculatePoints(angle1, angle2) {
+function calcPts(angle1, angle2) { //calculate points 
   // Calculate the absolute angle difference modulo 180 degrees
   const angleDifference = Math.abs(
     ((((angle1 - angle2 + 180) % 360) + 360) % 360) - 180
@@ -973,26 +965,26 @@ zzfx = // play sound
 const actSw = [ps]; // activeSwords
 
 actSw.forEach((sword, index) => {
-  detectRectangleCollision(index);
+  detectCol(index);
 });
 
-let requestId;
+let reqId;
 
 function gameLoop() {
   if (!gameState) return;
   tick++;
   ctx.clearRect(0, 0, cvs.width, cvs.height);
-  ps.checkSwordRotation();
-  ps.determineTSCol();
+  ps.csr();
+  ps.dTSCol();
   actSw.forEach((sword, index) => {
     if (index === 0 || sword.parried || sword.sliced) return;
-    detectRectangleCollision(index);
-    sword.drawRotation();
+    detectCol(index);
+    sword.drawRot();
     sword.handleParry();
     sword.handleSlice();
   });
   ENEMIES[enemyState].fx();
-  requestId = requestAnimationFrame(gameLoop);
+  reqId = requestAnimationFrame(gameLoop);
 }
 
 goInfo();
