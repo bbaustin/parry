@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Parry</title>
+    <link
+      rel="stylesheet"
+      href="styles.css"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗡️</text></svg>"
+    />
+  </head>
+  <body>
+    <h1>Parry</h1>
+    <section id="info">
+      <div id="start-info">
+        <h3>Welcome!</h3>
+        <ul>
+          <li>Move your sword with the mouse.</li>
+          <li>Rotate with Q and E.</li>
+          <li>
+            Parry enemy attacks by intersecting the enemy sword for around half
+            a second.
+          </li>
+          <li>
+            Try to create perpendicular angles between both swords (i.e. make a
+            'cross' or 'x' shape). This will give you a higher score.
+          </li>
+          <li>
+            If you don't parry the enemy sword in time, it will attack you,
+            lowering your score.
+          </li>
+        </ul>
+      </div>
+      <div id="round-info">
+        <h3>Last round, you were...</h3>
+        <h1 id="previous-round-results"></h1>
+        <ul>
+          <li>
+            <span id="your-score"></span> points /
+            <span id="total-possible-score"></span> total possible points <br />
+            (<span id="score-percent"></span>%)
+          </li>
+          <li>
+            <span id="your-parries"></span> parries /
+            <span id="total-possible-parries"></span> total enemy strikes <br />
+            (<span id="parries-percent"></span>%)
+          </li>
+        </ul>
+      </div>
+      <div id="enemy-info">
+        <h3>Next Enemy...</h3>
+        <div>
+          <h1 id="next-enemy"></h1>
+          <p id="next-enemy-description"></p>
+        </div>
+        <div>
+          <p>Ready?</p>
+          <button id="go-sound">Start (with sound)</button>
+          <button id="go"></button>
+        </div>
+      </div>
+      <div id="last-info">
+        <h1>Thanks for playing!</h1>
+        <p>
+          High score: <span id="high-score"></span
+          ><span id="new-high-score">New!</span>
+        </p>
+        <ul>
+          <li>
+            <a href="https://github.com/bbaustin/first-person-slicer"
+              >See code</a
+            >
+          </li>
+          <li><a href="https://js13kgames.com/">Back to js13kGames</a></li>
+          <li>
+            <a href="javascript:location.reload()"
+              >Play again (reloads page; high score will be saved)</a
+            >
+          </li>
+        </ul>
+      </div>
+    </section>
+    <main>
+      <canvas
+        id="canvas"
+        width="700"
+        height="500"
+      ></canvas>
+    </main>
+    <div id="scoreBoard">
+      <div>
+        <span>Score:</span>
+        <p id="score">0</p>
+      </div>
+      <div>
+        <span>Last parry angle:</span>
+        <p id="last-parry-angle">-</p>
+      </div>
+      <div>
+        <span>Last parry score:</span>
+        <p id="last-parry-score">0</p>
+      </div>
+    </div>
+    <script src="script.min.js"></script>
+  </body>
+</html>
