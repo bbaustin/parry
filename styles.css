@@ -10,32 +10,14 @@ body {
   line-height: 1.5;
 }
 
-main {
-  display: flex;
-  gap: 50px;
-  text-align: right;
-}
-
-span {
-  font-weight: 700;
-}
-
-ul {
-  text-align: left;
-}
-
-li {
-  margin-bottom: 12px;
-}
-
 h1 {
   font-family: fantasy;
   margin: 10px 0 0 0;
   text-align: center;
 }
 
-h3 {
-  margin: 0;
+span {
+  font-weight: 700;
 }
 
 button {
@@ -44,84 +26,39 @@ button {
   padding: 10px 20px;
 }
 
-#go-sound {
-  margin-bottom: 15px;
-}
-
-#arena {
-  border: 1px solid var(--f);
-  height: 500px;
-  width: 700px;
-}
-
 #canvas {
   border: 1px solid var(--f);
 }
 
 #info {
+  align-items: center;
   background: var(--b);
   border: 1px solid var(--f);
-  display: flex;
+  flex-direction: column;
   height: 500px;
-  justify-content: center;
+  justify-content: space-around;
   position: fixed;
   text-align: center;
   top: 66px;
   width: 700px;
 }
 
+#round-info {
+  width: 100%;
+  text-align: center;
+  display: block;
+  border-bottom: 1px solid var(--f);
+}
+
 #scoreBoard {
-  align-items: center;
-  border: 1px solid var(--f);
-  display: flex;
   font-size: 24px;
-  height: 100px;
-  justify-content: center;
-  margin-top: 30px;
-  width: 700px;
+  text-align: center;
 }
 
-#scoreBoard span {
-  font-size: 12px;
-}
-
-#scoreBoard p {
-  font-weight: 700;
-}
-
-#scoreBoard span,
-p {
-  margin: 0;
-}
-
-#scoreBoard div {
-  align-items: center;
-  border-right: 1px solid var(--f);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-  width: 33%;
-}
-
-#scoreBoard div:last-child {
-  border-right: none;
-}
-
-#last-info,
-#enemy-info {
-  border-left: 1px solid var(--f);
+#last-info {
   display: none;
   flex-direction: column;
   justify-content: space-around;
-}
-
-#start-info,
-#enemy-info,
-#round-info,
-#last-info {
-  padding: 30px;
-  width: 50%;
 }
 
 #high-score {
