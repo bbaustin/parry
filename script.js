@@ -319,15 +319,6 @@ class EnemySword extends Sword {
 //                                             Game State                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//const enemyPatterns = ['peasant', 'barbarian', 'dual wielder', 'duelist', 'paladin', 'crusader'];
-/**
- * 0 - peasant (random)
- * 1 - barbarian (straight line attacks)
- * 2 - dual wielder (close by attacks)
- * 3 - duelist (up and down with opposite angles)
- * 4 - paladin/high-int barb (straight line attacks but random angles)
- * 5 - crusader (far away attacks)
- */
 let enemyState = -1;
 let gameState = false;
 let pushedSwords = 0;
@@ -457,18 +448,18 @@ function paladin() {
   const msDelay = 50;
   const barbarianX = (pushedSwords % 4) * 150 + 100;
   if (pushedSwords < 4) {
-    pushSword(msDelay, barbarianX, barbarianX, 100, 100, getRandomInt(0, 359));
+    pushSword(msDelay, barbarianX, barbarianX, 110, 110, getRandomInt(0, 359));
   } else if (pushedSwords < 8) {
-    pushSword(msDelay, barbarianX, barbarianX, 225, 225, getRandomInt(0, 359));
+    pushSword(msDelay, barbarianX, barbarianX, 220, 220, getRandomInt(0, 359));
   } else if (pushedSwords < 12) {
-    pushSword(msDelay, barbarianX, barbarianX, 350, 350, getRandomInt(0, 359));
+    pushSword(msDelay, barbarianX, barbarianX, 330, 330, getRandomInt(0, 359));
   } else if (pushedSwords < 16) {
     pushSword(
       msDelay,
       barbarianX,
       barbarianX,
-      475,
-      475,
+      440,
+      440,
       getRandomInt(-100, 100)
     );
   } else {
@@ -577,10 +568,8 @@ function archer() {
 
 function dualWielder() {
   if (pushedSwords < 32) {
-    // get a random x and y
     const x1 = getRandomInt(75, 600);
     const y1 = getRandomInt(100, 475);
-    // have combos of angles, x2 addend, and x1s addend
     const combos = [
       { angle: 0, x2a: 30, y2a: 0 },
       {
@@ -594,19 +583,15 @@ function dualWielder() {
         y2a: 20,
       },
     ];
-    // do some math to get x2
     const index = Math.floor(Math.random() * combos.length);
     let x2 = x1 + combos[index].x2a;
     let y2 = y1 + combos[index].y2a;
-    // push
     pushSword(75, x1, x1, y1, y1, combos[index].angle, 37);
     pushSword(75, x2, x2, y2, y2, combos[index].angle, 37, false);
   } else {
     transitionToNextStage(400);
   }
 }
-
-// function crusader() {}
 
 function transitionToNextStage(delay = 200) {
   if (tick % delay === 0) {
@@ -855,6 +840,7 @@ function isColliding(polygonA, polygonB) {
   return true;
 }
 
+// NOTE: Should adjust this to include all 5 vertices. But it's fine as-is
 //Detect for a collision between the 2 rectangles
 function detectRectangleCollision(index) {
   if (index === 0) return;
@@ -1016,9 +1002,7 @@ function calculatePoints(angle1, angle2) {
   const angleDifference = Math.abs(
     ((((angle1 - angle2 + 180) % 360) + 360) % 360) - 180
   );
-
   const points = Math.round(100 - (Math.abs(90 - angleDifference) / 90) * 100);
-
   // Ensure points are within the range of 0 to 100
   return [angleDifference, Math.max(0, Math.min(100, points))];
 }
@@ -1158,13 +1142,8 @@ function gameLoop() {
     sword.handleParry();
     sword.handleSlice();
   });
+  // NOTE: You can also run a single enemy here. Like peasant(); or barbarian();
   ENEMIES[enemyState].fx();
-  // peasant();
-  // barbarian();
-  // archer();
-  // paladin();
-  // duelist();
-  // dualWielder();
   requestId = requestAnimationFrame(gameLoop);
 }
 

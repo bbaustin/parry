@@ -30,7 +30,7 @@ li {
 
 h1 {
   font-family: fantasy;
-  margin: 0;
+  margin: 10px 0 0 0;
   text-align: center;
 }
 
@@ -66,7 +66,7 @@ button {
   justify-content: center;
   position: fixed;
   text-align: center;
-  top: 56px;
+  top: 66px;
   width: 700px;
 }
 
