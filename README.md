@@ -1,6 +1,7 @@
 # Parry
 
-<img width="953" alt="Screenshot 2023-09-09 at 19 57 51" src="https://github.com/bbaustin/first-person-slicer/assets/18755168/e982f4bc-35f3-4ed4-b354-bba9c0ad2cbe">
+<img alt="Parry gamescreen" src="https://github.com/bbaustin/parry/assets/18755168/8f081afd-0729-4e47-bd35-beb39e4650d0">
+
 
 ## Introduction 
 
@@ -27,3 +28,11 @@ The 13th Century was a chunk of time during which, according to Wikipedia, prett
 4. Archer: Long-ranged sniper.
 5. Duelist: Skilled and precise.
 6. Dual Wielder: High-speed assassin. 
+
+## Tools Used
++ For sound effects, I used the awesome [ZzFX](https://killedbyapixel.github.io/ZzFX/) ([github](https://github.com/KilledByAPixel/ZzFX)).
++ For collision detection, I am very thankful to Qixotl LFC for making [this tutorial video](https://www.youtube.com/watch?v=MvlhMEE9zuc). I also found [Pikuma's video](https://www.youtube.com/watch?v=-EsWKT7Doww&t=1686s) very informative.
+
+## Finals Notes
+I'm now aware that monitors can have different refresh rates... I made this on a 60hz monitor. Currently, for users with 120hz screens, this game will be 2x more difficult :)
+Hoping to patch this eventually.
