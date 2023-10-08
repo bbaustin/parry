@@ -1,11 +1,11 @@
-# Parry
+# [Parry](https://js13kgames.com/entries/parry)
 
 <img alt="Parry gamescreen" src="https://github.com/bbaustin/parry/assets/18755168/8f081afd-0729-4e47-bd35-beb39e4650d0">
 
 
 ## Introduction 
 
-This is a game for [js13kGames](https://js13kgames.com/). It's my first time submitting a game, and also my first time seriously messing around with HTML Canvas!
+This is a game for [js13kGames](https://js13kgames.com/). It's my first time submitting a game, and also my first time seriously messing around with HTML Canvas! You can play the game [here](https://js13kgames.com/entries/parry).
 
 ### What's js13kGames?
 js13kGames is a yearly "game jam" event, in which participants are challenged to create a game within the limits of 13kb. Each year, there is a different theme to make your game about. This year, the theme was "The 13th Century."
