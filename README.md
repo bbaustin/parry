@@ -33,6 +33,6 @@ The 13th Century was a chunk of time during which, according to Wikipedia, prett
 + For sound effects, I used the awesome [ZzFX](https://killedbyapixel.github.io/ZzFX/) ([github](https://github.com/KilledByAPixel/ZzFX)).
 + For collision detection, I am very thankful to Qixotl LFC for making [this tutorial video](https://www.youtube.com/watch?v=MvlhMEE9zuc). I also found [Pikuma's video](https://www.youtube.com/watch?v=-EsWKT7Doww&t=1686s) very informative.
 
-## Finals Notes
+## Final Notes
 I'm now aware that monitors can have different refresh rates... I made this on a 60hz monitor. Currently, for users with 120hz screens, this game will be 2x more difficult :)
 Hoping to patch this eventually.
